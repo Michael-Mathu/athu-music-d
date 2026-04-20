@@ -201,7 +201,7 @@ fn write_lrc_sidecar(file_path: &str, raw_lrc: &str) -> Option<PathBuf> {
 fn try_embed_mp3_lyrics(
     file_path: &str,
     plain_text: &str,
-    lines: &[database::LyricsLine],
+    _lines: &[database::LyricsLine],
 ) -> Result<bool, String> {
     let path = Path::new(file_path);
     let ext = path
