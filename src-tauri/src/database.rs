@@ -177,6 +177,9 @@ pub fn init_db(app_dir: &std::path::Path) -> Result<Connection> {
             fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(artist_id) REFERENCES artists(id)
         );
+        CREATE INDEX IF NOT EXISTS idx_tracks_album_id ON tracks(album_id);
+        CREATE INDEX IF NOT EXISTS idx_tracks_artist_id ON tracks(artist_id);
+        CREATE INDEX IF NOT EXISTS idx_albums_artist_id ON albums(artist_id);
         "
     )?;
 

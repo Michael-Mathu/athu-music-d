@@ -61,6 +61,49 @@ pub fn fetch_track_lyrics(
     Ok(payload)
 }
 
+pub fn set_track_lyrics(
+    app_dir: &Path,
+    conn: &Connection,
+    track_id: i64,
+    raw_lrc: String,
+) -> Result<database::LyricsPayload, String> {
+    let track = database::get_track_metadata(conn, track_id).map_err(|e| e.to_string())?;
+
+    let lines = database::parse_lrc_lines(&raw_lrc);
+    let plain_text = if !lines.is_empty() {
+        lines
+            .iter()
+            .map(|line| line.text.clone())
+            .collect::<Vec<_>>()
+            .join("\n")
+    } else {
+        raw_lrc.clone()
+    };
+
+    let stored_path = write_lrc_sidecar(&track.file_path, &raw_lrc)
+        .map(|path| path.to_string_lossy().to_string());
+    
+    // Write plain text USLT regardless if it's synced. Lofty's SYLT construct is incredibly nested
+    // but standard readers load plain text fallback cleanly.
+    let embedded = try_embed_mp3_lyrics(&track.file_path, &plain_text, &lines).unwrap_or(false);
+
+    let payload = database::LyricsPayload {
+        track_id,
+        provider: "manual".to_string(),
+        raw_lrc,
+        plain_text,
+        synced: !lines.is_empty(),
+        embedded,
+        stored_path,
+        lines,
+    };
+
+    database::upsert_lyrics_cache(conn, &payload).map_err(|e| e.to_string())?;
+    let _ = fs::create_dir_all(app_dir.join("lyrics-cache"));
+
+    Ok(payload)
+}
+
 pub fn fetch_artist_bio(
     conn: &Connection,
     artist_id: i64,
@@ -158,7 +201,7 @@ fn write_lrc_sidecar(file_path: &str, raw_lrc: &str) -> Option<PathBuf> {
 fn try_embed_mp3_lyrics(
     file_path: &str,
     plain_text: &str,
-    _lines: &[database::LyricsLine],
+    lines: &[database::LyricsLine],
 ) -> Result<bool, String> {
     let path = Path::new(file_path);
     let ext = path
@@ -172,12 +215,22 @@ fn try_embed_mp3_lyrics(
     }
 
     let mut tag = Id3v2Tag::new();
+    
+    // Always write fallback unsynchronized frame 
     tag.insert(Frame::UnsynchronizedText(UnsynchronizedTextFrame::new(
         TextEncoding::UTF8,
         *b"eng",
         String::new(),
         plain_text.to_string(),
     )));
+
+    // SYLT embedding is disabled in this version to avoid lofty 0.24.0 API conflicts.
+    // Clean display is maintained via sidecar files and database caching.
+    /*
+    if !lines.is_empty() {
+        // ... (SYLT logic)
+    }
+    */
 
     tag.save_to_path(path, WriteOptions::default())
         .map_err(|e| e.to_string())?;

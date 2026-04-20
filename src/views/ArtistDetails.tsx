@@ -1,4 +1,4 @@
-import { Avatar, Box, Button, CircularProgress, IconButton, List, ListItemAvatar, ListItemButton, ListItemText, Paper, Typography } from '@mui/material';
+import { Avatar, Box, Button, CircularProgress, IconButton, List, ListItemAvatar, ListItemButton, ListItemText, Paper, Typography, alpha } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import PersonIcon from '@mui/icons-material/Person';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
@@ -6,6 +6,8 @@ import { useEffect, useState, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { fetchArtistBio } from '../lib/tauri';
 import type { Artist, ArtistBioPayload, Track } from '../types/library';
+import { useArtistImage } from '../lib/metadata';
+import { useAppTheme } from '../lib/ThemeContext';
 
 interface ArtistDetailsProps {
   artists: Artist[];
@@ -28,6 +30,7 @@ export const ArtistDetails = ({
 }: ArtistDetailsProps) => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { primaryColor } = useAppTheme();
   const artistId = id ? parseInt(id, 10) : null;
   
   const [bio, setBio] = useState<ArtistBioPayload | null>(null);
@@ -35,6 +38,8 @@ export const ArtistDetails = ({
 
   const artist = useMemo(() => artists.find(a => a.id === artistId), [artists, artistId]);
   const artistTracks = useMemo(() => tracks.filter(t => t.artist_id === artistId), [tracks, artistId]);
+  
+  const { imageUrl, loading: loadingImage } = useArtistImage(artist?.name ?? '');
 
   useEffect(() => {
     let cancelled = false;
@@ -66,55 +71,70 @@ export const ArtistDetails = ({
   }
 
   return (
-    <Box sx={{ position: 'relative', width: '100%', height: '100%', overflowY: 'auto', p: 4 }}>
-      {/* Back button */}
+    <Box sx={{ position: 'relative', width: '100%', height: '100%', overflowY: 'auto', p: { xs: 2, md: 4 } }}>
       <IconButton 
         onClick={() => navigate(-1)} 
-        sx={{ mb: 3, bgcolor: 'rgba(255,255,255,0.05)', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)' } }}
+        sx={{ mb: 3, bgcolor: 'background.paper', '&:hover': { bgcolor: 'action.hover' } }}
       >
         <ArrowBackIosNewIcon fontSize="small" />
       </IconButton>
 
-      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 4, mb: 4 }}>
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 240 }}>
+      <Box sx={{ display: 'flex', flexDirection: { xs: 'column', md: 'row' }, gap: 6, mb: 6, alignItems: { xs: 'center', md: 'flex-start' } }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { md: 300 } }}>
           <Box
             sx={{
-              width: 200,
-              height: 200,
+              width: 260,
+              height: 260,
               borderRadius: '50%',
-              bgcolor: 'rgba(255,255,255,0.05)',
+              bgcolor: 'background.paper',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               mb: 3,
-              boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+              overflow: 'hidden',
+              boxShadow: `0 20px 60px ${alpha(primaryColor, 0.2)}`,
+              position: 'relative'
             }}
           >
-            <PersonIcon sx={{ fontSize: 100, color: 'rgba(255,255,255,0.2)' }} />
+            {imageUrl ? (
+              <Box
+                component="img"
+                src={imageUrl}
+                alt={artist.name}
+                sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              />
+            ) : (
+              <PersonIcon sx={{ fontSize: 140, color: 'text.secondary', opacity: 0.1 }} />
+            )}
+            {loadingImage && (
+              <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.3)' }}>
+                <CircularProgress color="inherit" />
+              </Box>
+            )}
           </Box>
-          <Typography variant="h3" sx={{ fontWeight: 800, textAlign: 'center', mb: 1 }}>
+          <Typography variant="h3" sx={{ fontWeight: 900, textAlign: 'center', mb: 1, letterSpacing: -1.5 }}>
             {artist.name}
           </Typography>
-          <Typography variant="subtitle1" color="text.secondary">
+          <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 600, opacity: 0.7 }}>
             {artist.album_count} Albums • {artist.track_count} Tracks
           </Typography>
         </Box>
 
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>About</Typography>
+        <Box sx={{ flex: 1, width: '100%' }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 2, letterSpacing: -0.5 }}>About</Typography>
           {loadingBio ? (
-            <CircularProgress />
+            <CircularProgress size={32} />
           ) : bio ? (
-            <Paper sx={{ p: 3, bgcolor: 'rgba(255,255,255,0.03)', borderRadius: 3, elevation: 0 }}>
-              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8 }}>
+            <Paper variant="outlined" sx={{ p: 4, bgcolor: 'background.paper', borderRadius: 6, border: '1px solid', borderColor: 'divider' }}>
+              <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'text.primary', opacity: 0.9 }}>
                 {bio.biography}
               </Typography>
               {bio.source_url && (
                 <Button 
-                  variant="text" 
+                  variant="outlined" 
                   href={bio.source_url} 
                   target="_blank" 
-                  sx={{ mt: 2, textTransform: 'none' }}
+                  sx={{ mt: 3, borderRadius: 28, textTransform: 'none' }}
                 >
                   Read more on Wikipedia
                 </Button>
@@ -126,35 +146,36 @@ export const ArtistDetails = ({
         </Box>
       </Box>
 
-      <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>Discography</Typography>
+      <Typography variant="h5" sx={{ fontWeight: 800, mb: 3, letterSpacing: -0.5 }}>Discography</Typography>
       
       {artistTracks.length > 0 ? (
-        <List sx={{ bgcolor: 'rgba(255,255,255,0.02)', borderRadius: 3, p: 1 }}>
+        <List sx={{ bgcolor: 'transparent', p: 0 }}>
           {artistTracks.map((track) => (
             <ListItemButton
               key={track.id}
               onClick={() => void onPlayTrack(track)}
               sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                bgcolor: currentTrackId === track.id ? 'rgba(255, 171, 64, 0.12)' : 'transparent',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' }
+                borderRadius: 4,
+                mb: 1,
+                transition: '0.2s',
+                bgcolor: currentTrackId === track.id ? alpha(primaryColor, 0.15) : 'transparent',
+                '&:hover': { bgcolor: alpha(primaryColor, 0.05) }
               }}
             >
               <ListItemAvatar>
                 <Avatar
                   variant="rounded"
                   src={track.cover_art_data_url ?? undefined}
-                  sx={{ bgcolor: 'rgba(255,255,255,0.1)' }}
+                  sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: 'background.paper' }}
                 >
                   <MusicNoteIcon />
                 </Avatar>
               </ListItemAvatar>
               <ListItemText
-                primary={<Typography variant="body1" sx={{ fontWeight: 600 }}>{track.title}</Typography>}
+                primary={<Typography variant="body1" sx={{ fontWeight: 700, color: currentTrackId === track.id ? 'primary.main' : 'text.primary' }}>{track.title}</Typography>}
                 secondary={track.album}
               />
-              <Typography variant="body2" color="text.secondary" sx={{ mr: 2 }}>
+              <Typography variant="body2" color="text.secondary" sx={{ mr: 2, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
                 {formatDuration(track.duration)}
               </Typography>
             </ListItemButton>

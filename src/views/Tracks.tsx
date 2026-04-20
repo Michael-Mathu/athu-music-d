@@ -1,8 +1,11 @@
-import { Alert, Avatar, Box, Button, CircularProgress, Divider, IconButton, List, ListItemButton, ListItemAvatar, ListItemText, Menu, MenuItem, Paper, TextField, Typography } from '@mui/material';
+import { Alert, Avatar, Box, Button, CircularProgress, IconButton, List, ListItemButton, ListItemAvatar, ListItemText, Menu, MenuItem, Paper, TextField, Typography, alpha } from '@mui/material';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import SearchIcon from '@mui/icons-material/Search';
 import type { ArtistBioPayload, LyricsPayload, Track } from '../types/library';
+import { Virtuoso } from 'react-virtuoso';
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { useAppTheme } from '../lib/ThemeContext';
 
 interface TracksProps {
   tracks: Track[];
@@ -52,6 +55,7 @@ export const Tracks = ({
   const lyricRowRefs = useRef<Map<number, HTMLDivElement | null>>(new Map());
   const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
   const [menuTrack, setMenuTrack] = useState<Track | null>(null);
+  const { primaryColor } = useAppTheme();
 
   const activeLyricIndex = useMemo(() => {
     if (!lyrics || lyrics.lines.length === 0) {
@@ -78,132 +82,124 @@ export const Tracks = ({
   }, [activeLyricIndex, lyrics]);
 
   return (
-    <>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: 'bold' }}>
+    <Box sx={{ maxWidth: 1200, mx: 'auto' }}>
+      <Typography variant="h3" sx={{ fontWeight: 900, mb: 4, letterSpacing: -1.5 }}>
         Tracks
       </Typography>
 
-      <Paper sx={{ p: 2.5, mb: 3, bgcolor: 'rgba(255,255,255,0.03)' }}>
-        <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 600 }}>
-          Scan local music folder
+      <Paper variant="outlined" sx={{ p: 4, mb: 4, borderRadius: 6, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <SearchIcon color="primary" /> Scan Library
         </Typography>
         <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', flexWrap: 'wrap' }}>
           <TextField
             fullWidth
-            label="Folder path"
-            placeholder="C:\\Users\\you\\Music"
+            placeholder="Paste folder path (e.g. C:\Users\Music)"
             value={scanPath}
             onChange={(event) => onScanPathChange(event.target.value)}
-            sx={{ flex: 1, minWidth: 320 }}
+            sx={{ 
+              flex: 1, 
+              minWidth: 300,
+              '& .MuiOutlinedInput-root': {
+                borderRadius: 4,
+                bgcolor: 'action.hover'
+              }
+            }}
           />
-          <Button variant="contained" onClick={onScan} disabled={scanning}>
-            {scanning ? 'Scanning...' : 'Scan Library'}
+          <Button 
+            variant="contained" 
+            onClick={onScan} 
+            disabled={scanning}
+            sx={{ px: 4, height: 56, boxShadow: `0 8px 20px ${alpha(primaryColor, 0.3)}` }}
+          >
+            {scanning ? 'Scanning...' : 'Scale Folder'}
           </Button>
         </Box>
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Paste a Windows music folder path and the app will index supported files from disk.
-        </Typography>
       </Paper>
 
-      {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
+      {error ? <Alert severity="error" sx={{ mb: 3, borderRadius: 3 }}>{error}</Alert> : null}
 
       {currentTrack ? (
-        <Paper sx={{ p: 2.5, mb: 3, bgcolor: 'rgba(255,255,255,0.03)' }}>
-          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center', mb: 2 }}>
+        <Paper variant="outlined" sx={{ p: 4, mb: 4, borderRadius: 6, bgcolor: alpha(primaryColor, 0.03), border: '1px solid', borderColor: alpha(primaryColor, 0.1) }}>
+          <Box sx={{ display: 'flex', gap: 3, alignItems: 'center', mb: 4 }}>
             <Avatar
               variant="rounded"
               src={currentTrack.cover_art_data_url ?? undefined}
-              sx={{ width: 72, height: 72, bgcolor: 'rgba(255,255,255,0.1)' }}
+              sx={{ width: 80, height: 80, borderRadius: 3, bgcolor: 'background.paper', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
             >
               <MusicNoteIcon />
             </Avatar>
             <Box>
-              <Typography variant="h6" sx={{ fontWeight: 600 }}>{currentTrack.title}</Typography>
-              <Typography color="text.secondary">{currentTrack.artist} • {currentTrack.album}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                Lyrics and artist bio are cached locally after the first fetch.
-              </Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800 }}>{currentTrack.title}</Typography>
+              <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 600 }}>{currentTrack.artist} • {currentTrack.album}</Typography>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', lg: '1.3fr 1fr' } }}>
+          <Box sx={{ display: 'grid', gap: 4, gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' } }}>
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Synced Lyrics</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, fontSize: '1rem' }}>Lyrics</Typography>
               {lyricsLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                  <CircularProgress size={24} />
-                </Box>
+                <CircularProgress size={24} sx={{ my: 2 }} />
               ) : lyrics ? (
-                <>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
-                    Source: {lyrics.provider}{lyrics.embedded ? ' • embedded into MP3 tag' : lyrics.stored_path ? ` • sidecar: ${lyrics.stored_path}` : ''}
-                  </Typography>
-                  <Paper variant="outlined" sx={{ maxHeight: 260, overflowY: 'auto', p: 1.5, bgcolor: 'rgba(255,255,255,0.02)' }}>
-                    {lyrics.lines.length > 0 ? lyrics.lines.map((line, index) => {
-                      const isActive = index === activeLyricIndex;
-                      return (
-                        <Box
-                          key={`${line.timestamp_ms}-${index}`}
-                          ref={(el: HTMLDivElement | null) => {
-                            lyricRowRefs.current.set(line.timestamp_ms, el);
-                          }}
+                <Paper variant="outlined" sx={{ maxHeight: 300, overflowY: 'auto', p: 2, borderRadius: 4, bgcolor: 'background.default' }}>
+                  {lyrics.lines.length > 0 ? lyrics.lines.map((line, index) => {
+                    const isActive = index === activeLyricIndex;
+                    return (
+                      <Box
+                        key={`${line.timestamp_ms}-${index}`}
+                        ref={(el: HTMLDivElement | null) => {
+                          lyricRowRefs.current.set(line.timestamp_ms, el);
+                        }}
+                        sx={{
+                          py: 1,
+                          px: 2,
+                          borderRadius: 3,
+                          mb: 0.5,
+                          transition: '0.3s',
+                          bgcolor: isActive ? alpha(primaryColor, 0.15) : 'transparent',
+                        }}
+                      >
+                        <Typography
+                          variant="body1"
                           sx={{
-                            py: 0.5,
-                            px: 1,
-                            borderRadius: 1,
-                            mb: 0.5,
-                            bgcolor: isActive ? 'rgba(255, 171, 64, 0.14)' : 'transparent',
+                            color: isActive ? 'primary.main' : 'text.secondary',
+                            fontWeight: isActive ? 800 : 500,
+                            opacity: isActive ? 1 : 0.6,
+                            transition: '0.3s'
                           }}
                         >
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              color: isActive ? 'text.primary' : 'text.secondary',
-                              fontWeight: isActive ? 600 : 400,
-                            }}
-                          >
-                            {line.text || '...'}
-                          </Typography>
-                        </Box>
-                      );
-                    }) : (
-                      <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                        {lyrics.plain_text}
-                      </Typography>
-                    )}
-                  </Paper>
-                </>
+                          {line.text || '...'}
+                        </Typography>
+                      </Box>
+                    );
+                  }) : (
+                    <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap', opacity: 0.8 }}>
+                      {lyrics.plain_text}
+                    </Typography>
+                  )}
+                </Paper>
               ) : (
-                <Typography color="text.secondary">No lyrics loaded for this track yet.</Typography>
+                <Typography color="text.secondary" variant="body2">No lyrics found.</Typography>
               )}
             </Box>
 
             <Box>
-              <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 1 }}>Artist Bio</Typography>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 2, fontSize: '1rem' }}>Artist Bio</Typography>
               {artistBioLoading ? (
-                <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
-                  <CircularProgress size={24} />
-                </Box>
+                <CircularProgress size={24} sx={{ my: 2 }} />
               ) : artistBio ? (
-                <>
-                  <Typography variant="caption" color="text.secondary" sx={{ mb: 1.5, display: 'block' }}>
-                    Source: {artistBio.provider}
+                <Paper variant="outlined" sx={{ maxHeight: 300, overflowY: 'auto', p: 3, borderRadius: 4, bgcolor: 'background.default' }}>
+                  <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, opacity: 0.8 }}>
+                    {artistBio.biography}
                   </Typography>
-                  <Paper variant="outlined" sx={{ maxHeight: 260, overflowY: 'auto', p: 1.5, bgcolor: 'rgba(255,255,255,0.02)' }}>
-                    <Typography variant="body2" sx={{ whiteSpace: 'pre-wrap' }}>
-                      {artistBio.biography}
-                    </Typography>
-                  </Paper>
-                </>
+                </Paper>
               ) : (
-                <Typography color="text.secondary">No artist bio available for this track yet.</Typography>
+                <Typography color="text.secondary" variant="body2">No bio found.</Typography>
               )}
             </Box>
           </Box>
         </Paper>
       ) : null}
-
-      <Divider sx={{ mb: 2, borderColor: 'rgba(255,255,255,0.06)' }} />
 
       {loading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
@@ -212,57 +208,62 @@ export const Tracks = ({
       ) : null}
 
       {!loading && tracks.length === 0 ? (
-        <Paper sx={{ p: 4, textAlign: 'center', bgcolor: 'rgba(255,255,255,0.03)' }}>
-          <Typography variant="h6" gutterBottom>No tracks yet</Typography>
-          <Typography color="text.secondary">
-            Scan a folder with MP3, FLAC, WAV, or M4A files to populate the library.
-          </Typography>
+        <Paper variant="outlined" sx={{ p: 6, textAlign: 'center', borderRadius: 6 }}>
+          <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>Empty Library</Typography>
+          <Typography color="text.secondary">Scan a folder to begin your collection.</Typography>
         </Paper>
       ) : null}
 
       {!loading && tracks.length > 0 ? (
-        <List>
-          {tracks.map((track) => (
-            <ListItemButton
-              key={track.id}
-              onClick={() => void onPlayTrack(track)}
-              sx={{
-                borderRadius: 2,
-                mb: 0.5,
-                bgcolor: currentTrackId === track.id ? 'rgba(255, 171, 64, 0.12)' : 'transparent',
-                '&:hover': { bgcolor: 'rgba(255,255,255,0.05)' }
-              }}
-            >
-              <ListItemAvatar>
-                <Avatar
-                  variant="rounded"
-                  src={track.cover_art_data_url ?? undefined}
-                  sx={{ bgcolor: 'rgba(255,255,255,0.1)' }}
-                >
-                  <MusicNoteIcon />
-                </Avatar>
-              </ListItemAvatar>
-              <ListItemText
-                primary={<Typography variant="body1" sx={{ fontWeight: 500 }}>{track.title}</Typography>}
-                secondary={`${track.artist} • ${track.album}`}
-              />
-              <Typography variant="body2" color="text.secondary" sx={{ mr: 2 }}>
-                {formatDuration(track.duration)}
-              </Typography>
-              <IconButton
-                edge="end"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setMenuAnchor(event.currentTarget);
-                  setMenuTrack(track);
+        <List sx={{ minHeight: 600 }}>
+          <Virtuoso
+            style={{ height: '100%', minHeight: 600 }}
+            data={tracks}
+            itemContent={(_, track) => (
+              <ListItemButton
+                key={track.id}
+                onClick={() => void onPlayTrack(track)}
+                sx={{
+                  borderRadius: 4,
+                  mb: 1,
+                  mx: 0.5,
+                  transition: '0.2s',
+                  bgcolor: currentTrackId === track.id ? alpha(primaryColor, 0.1) : 'transparent',
+                  '&:hover': { bgcolor: alpha(primaryColor, 0.05) }
                 }}
               >
-                <MoreVertIcon />
-              </IconButton>
-            </ListItemButton>
-          ))}
+                <ListItemAvatar>
+                  <Avatar
+                    variant="rounded"
+                    src={track.cover_art_data_url ?? undefined}
+                    sx={{ width: 48, height: 48, borderRadius: 2, bgcolor: 'background.paper' }}
+                  >
+                    <MusicNoteIcon />
+                  </Avatar>
+                </ListItemAvatar>
+                <ListItemText
+                  primary={<Typography variant="body1" sx={{ fontWeight: 700, color: currentTrackId === track.id ? 'primary.main' : 'text.primary' }}>{track.title}</Typography>}
+                  secondary={<Typography variant="body2" sx={{ opacity: 0.6 }}>{track.artist} • {track.album}</Typography>}
+                />
+                <Typography variant="body2" color="text.secondary" sx={{ mr: 4, fontWeight: 600, fontVariantNumeric: 'tabular-nums' }}>
+                  {formatDuration(track.duration)}
+                </Typography>
+                <IconButton
+                  edge="end"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setMenuAnchor(event.currentTarget);
+                    setMenuTrack(track);
+                  }}
+                >
+                  <MoreVertIcon />
+                </IconButton>
+              </ListItemButton>
+            )}
+          />
         </List>
       ) : null}
+
       <Menu
         anchorEl={menuAnchor}
         open={Boolean(menuAnchor && menuTrack)}
@@ -270,8 +271,10 @@ export const Tracks = ({
           setMenuAnchor(null);
           setMenuTrack(null);
         }}
+        slotProps={{ paper: { sx: { borderRadius: 4, p: 1 } } }}
       >
         <MenuItem
+          sx={{ borderRadius: 2 }}
           onClick={() => {
             if (menuTrack) onPlayNext(menuTrack);
             setMenuAnchor(null);
@@ -281,6 +284,7 @@ export const Tracks = ({
           Play next
         </MenuItem>
         <MenuItem
+          sx={{ borderRadius: 2 }}
           onClick={() => {
             if (menuTrack) onAddToQueue(menuTrack);
             setMenuAnchor(null);
@@ -290,6 +294,6 @@ export const Tracks = ({
           Add to queue
         </MenuItem>
       </Menu>
-    </>
+    </Box>
   );
 };

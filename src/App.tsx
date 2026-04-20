@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Box, CssBaseline, ThemeProvider } from '@mui/material';
+import { Box, CssBaseline } from '@mui/material';
 import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { darkTheme } from './theme';
 import { Sidebar } from './components/layout/Sidebar';
 import { BottomBar } from './components/layout/BottomBar';
 import { Tracks } from './views/Tracks';
@@ -14,6 +13,8 @@ import { NowPlaying } from './views/NowPlaying';
 import { addTrackToPlaylist, createPlaylist, fetchAlbumArt, fetchArtistBio, fetchTrackLyrics, getPlaybackPosMs, listAlbums, listArtists, listPlaylistTracks, listPlaylists, listTracks, pauseAudio, playAudio, removeTrackFromPlaylist, resumeAudio, scanLocalFiles, seekPlaybackMs, setVolume as setPlayerVolume, updateOsMetadata } from './lib/tauri';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import type { Album, Artist, ArtistBioPayload, LyricsPayload, Playlist, PlaylistTrack, Track } from './types/library';
+import { ThemeContextProvider } from './lib/ThemeContext';
+import { Settings } from './views/Settings';
 
 function AppContent() {
   const location = useLocation();
@@ -321,7 +322,7 @@ function AppContent() {
     if (nextTrack) {
       await handlePlayTrack(nextTrack);
     }
-  }, [tracks, queueTrackIds, repeatMode, currentTrack, currentTrackId, queueIndex, handlePlayTrack]);
+  }, [tracks, queueTrackIds, repeatMode, currentTrack, queueIndex, handlePlayTrack]);
 
   useEffect(() => {
     if (!isPlaying || !currentTrack) {
@@ -535,6 +536,7 @@ function AppContent() {
                   />
                 }
               />
+              <Route path="/settings" element={<Settings />} />
             </Routes>
           </Box>
           <BottomBar
@@ -563,11 +565,11 @@ function AppContent() {
 
 export default function App() {
   return (
-    <ThemeProvider theme={darkTheme}>
+    <ThemeContextProvider>
       <CssBaseline />
       <HashRouter>
         <AppContent />
       </HashRouter>
-    </ThemeProvider>
+    </ThemeContextProvider>
   );
 }
