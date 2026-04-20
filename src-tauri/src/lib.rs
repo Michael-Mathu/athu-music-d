@@ -205,7 +205,7 @@ pub fn run() {
             let audio_tx = audio::init_audio_thread();
             app.manage(audio::AudioState { tx: audio_tx });
 
-            let mut hwnd = None;
+            let hwnd = None;
             #[cfg(target_os = "windows")]
             {
                 if let Some(window) = app.get_webview_window("main") {

@@ -9,7 +9,7 @@ pub enum AudioCommand {
     Play(String),
     Pause,
     Resume,
-    Stop,
+    _Stop,
     SetVolume(f32),
     GetPos(mpsc::Sender<u64>),
     Seek(u64),
@@ -39,7 +39,7 @@ pub fn init_audio_thread() -> mpsc::Sender<AudioCommand> {
                 }
                 AudioCommand::Pause => player.pause(),
                 AudioCommand::Resume => player.play(),
-                AudioCommand::Stop => player.stop(),
+                AudioCommand::_Stop => player.stop(),
                 AudioCommand::SetVolume(vol) => player.set_volume(vol),
                 AudioCommand::GetPos(reply) => {
                     let _ = reply.send(player.get_pos().as_millis() as u64);

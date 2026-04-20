@@ -43,6 +43,7 @@ pub struct ArtistRecord {
     pub album_count: i64,
 }
 
+#[allow(dead_code)]
 #[derive(Clone)]
 pub struct TrackMetadata {
     pub id: i64,

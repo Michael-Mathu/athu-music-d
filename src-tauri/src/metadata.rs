@@ -61,6 +61,7 @@ pub fn fetch_track_lyrics(
     Ok(payload)
 }
 
+#[allow(dead_code)]
 pub fn set_track_lyrics(
     app_dir: &Path,
     conn: &Connection,
