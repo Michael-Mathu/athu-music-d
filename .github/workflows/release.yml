@@ -14,7 +14,7 @@ jobs:
       matrix:
         include:
           - platform: 'ubuntu-22.04'
-            args: '--bundles rpm'
+            args: '--bundles deb,appimage,rpm'
           - platform: 'windows-latest'
             args: '--bundles msi,nsis'
 

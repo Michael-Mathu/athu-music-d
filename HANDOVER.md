@@ -1,7 +1,7 @@
 # Athu Music D: Project Handover Document
 
 ## Project Overview
-**Athu Music D** is a high-performance, premium Windows music player built using **Tauri** and **React**. The application focuses on an offline-first experience with advanced metadata integration and a modern **Material You (MD3)** design language.
+**Athu Music D** is a high-performance, premium multi-platform music player built using **Tauri** and **React**. The application focuses on an offline-first experience with advanced metadata integration and a modern **Material You (MD3)** design language. Currently targeting **Windows** and **Linux**.
 
 ## Technology Stack
 - **Framework**: [Tauri](https://tauri.app/) (Rust backend for system access, React frontend).
@@ -63,9 +63,24 @@ Athu Music D automatically fills in the gaps for your local library:
    npm run tauri dev
    ```
 
-### Building for Windows
-To generate a standalone `.exe`:
+### Building
+The project uses **GitHub Actions** to automate multi-platform releases.
+
+#### Automated Releases (Recommended)
+Push a version tag (e.g., `v0.1.7`) to trigger the `Release` workflow. This will build:
+- **Windows**: `.msi` and `.exe` (NSIS).
+- **Linux**: `.AppImage`, `.deb`, and `.rpm`.
+
+#### Manual Local Build
+**Windows:**
 ```bash
+npm run tauri build
+```
+
+**Linux (Debian/Ubuntu):**
+Ensure you have the required dependencies:
+```bash
+sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev patchelf rpm libsoup-3.0-dev libjavascriptcoregtk-4.1-dev libasound2-dev libdbus-1-dev
 npm run tauri build
 ```
 
