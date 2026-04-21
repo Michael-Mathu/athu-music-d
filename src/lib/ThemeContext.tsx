@@ -1,68 +1,71 @@
-import React, { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { ThemeProvider } from '@mui/material/styles';
-import { createAppTheme } from '../theme';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 
-type ThemeMode = 'light' | 'dark';
+type Theme = 'light' | 'dark' | 'system';
 
-interface ThemeContextType {
-  mode: ThemeMode;
-  primaryColor: string;
-  setMode: (mode: ThemeMode) => void;
-  setPrimaryColor: (color: string) => void;
-  toggleMode: () => void;
+interface ThemeContextValue {
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  accentColor: string;
+  setAccentColor: (c: string) => void;
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+const ThemeContext = createContext<ThemeContextValue>({
+  theme: 'dark',
+  setTheme: () => {},
+  accentColor: '#3584E4',
+  setAccentColor: () => {},
+});
 
-export const useAppTheme = () => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useAppTheme must be used within a ThemeContextProvider');
-  }
-  return context;
-};
-
-export const ThemeContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mode, setMode] = useState<ThemeMode>(() => {
-    const saved = localStorage.getItem('theme-mode');
-    return (saved as ThemeMode) || 'dark';
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
+  const [theme, setThemeState] = useState<Theme>(() => {
+    try {
+      return (localStorage.getItem('adw-theme') as Theme) ?? 'dark';
+    } catch { return 'dark'; }
   });
 
-  const [primaryColor, setPrimaryColor] = useState(() => {
-    const saved = localStorage.getItem('theme-primary-color');
-    return saved || '#ffab40'; // Original Athu Orange
+  const [accentColor, setAccentColorState] = useState(() => {
+    try {
+      return localStorage.getItem('adw-accent') ?? '#3584E4';
+    } catch { return '#3584E4'; }
   });
 
+  // Apply accent color to CSS custom property
   useEffect(() => {
-    localStorage.setItem('theme-mode', mode);
-  }, [mode]);
+    document.documentElement.style.setProperty('--adw-accent', accentColor);
+    try { localStorage.setItem('adw-accent', accentColor); } catch {}
+  }, [accentColor]);
 
+  // Apply theme class and listen for system changes
   useEffect(() => {
-    localStorage.setItem('theme-primary-color', primaryColor);
-  }, [primaryColor]);
+    const applyTheme = (t: Theme) => {
+      const isDark =
+        t === 'dark' ||
+        (t === 'system' &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches);
+      document.documentElement.setAttribute(
+        'data-theme', isDark ? 'dark' : 'light'
+      );
+    };
 
-  const toggleMode = () => {
-    setMode((prev) => (prev === 'light' ? 'dark' : 'light'));
-  };
+    applyTheme(theme);
+    try { localStorage.setItem('adw-theme', theme); } catch {}
 
-  const theme = useMemo(() => createAppTheme(mode, primaryColor), [mode, primaryColor]);
+    if (theme === 'system') {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const handler = () => applyTheme('system');
+      mq.addEventListener('change', handler);
+      return () => mq.removeEventListener('change', handler);
+    }
+  }, [theme]);
 
-  const value = useMemo(
-    () => ({
-      mode,
-      primaryColor,
-      setMode,
-      setPrimaryColor,
-      toggleMode,
-    }),
-    [mode, primaryColor]
-  );
+  const setTheme = (t: Theme) => setThemeState(t);
+  const setAccentColor = (c: string) => setAccentColorState(c);
 
   return (
-    <ThemeContext.Provider value={value}>
-      <ThemeProvider theme={theme}>
-        {children}
-      </ThemeProvider>
+    <ThemeContext.Provider value={{ theme, setTheme, accentColor, setAccentColor }}>
+      {children}
     </ThemeContext.Provider>
   );
-};
+}
+
+export const useTheme = () => useContext(ThemeContext);

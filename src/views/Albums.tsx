@@ -1,102 +1,166 @@
-import { Box, Card, CardContent, CardMedia, CircularProgress, Typography, alpha } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
-import type { Album } from '../types/library';
-import { useAppTheme } from '../lib/ThemeContext';
+import { Box, Typography, Avatar, IconButton } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { Album, Track } from '../types/library';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import { useMemo } from 'react';
 
-interface AlbumsProps {
-  albums: Album[];
-  loading: boolean;
+const formatDuration = (duration: number) => {
+  const minutes = Math.floor(duration / 60);
+  const seconds = Math.floor(duration % 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+interface AlbumDetailsProps {
+  album: Album;
+  tracks: Track[];
+  onBack: () => void;
+  onPlayTrack: (id: number) => void;
 }
 
-export const Albums = ({ albums, loading }: AlbumsProps) => {
-  const navigate = useNavigate();
-  const { primaryColor } = useAppTheme();
+const AlbumDetailsInternal = ({ album, tracks, onBack, onPlayTrack }: AlbumDetailsProps) => {
+  const theme = useTheme();
+  const vinyl = theme.vinyl;
+  const isDark = theme.palette.mode === 'dark';
+  const albumTracks = useMemo(() => tracks.filter((t) => t.album_id === album.id), [album.id, tracks]);
 
   return (
-    <Box sx={{ maxWidth: 1400, mx: 'auto' }}>
-      <Typography variant="h3" sx={{ fontWeight: 900, mb: 4, letterSpacing: -1.5 }}>
-        Albums
-      </Typography>
-
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
+    <Box sx={{ width: '100%', pb: 10, display: 'flex', flexDirection: 'column' }}>
+      <Box sx={{ display: 'flex', gap: 4, p: 4, alignItems: 'flex-start' }}>
+        <IconButton onClick={onBack} sx={{ color: theme.palette.text.primary }}>
+          <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+        <Avatar
+          variant="square"
+          src={album.cover_art_data_url || "/src/assets/logo.png"}
+          sx={{
+            width: 200,
+            height: 200,
+            borderRadius: '12px',
+            bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+            flexShrink: 0,
+            '& img': { objectFit: album.cover_art_data_url ? 'cover' : 'contain', p: album.cover_art_data_url ? 0 : 4 }
+          }}
+        />
+        <Box sx={{ display: 'flex', flexDirection: 'column', pt: 2 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 20, mb: 1 }}>{album.title}</Typography>
+          <Typography sx={{ fontWeight: 400, fontSize: 14, color: theme.palette.text.secondary, mb: 0.5 }}>{album.artist}</Typography>
+          <Typography sx={{ fontWeight: 400, fontSize: 12, color: theme.palette.text.secondary }}>
+            {albumTracks.length} tracks • {album.year || 'Unknown year'}
+          </Typography>
         </Box>
-      ) : null}
-
-      {!loading && albums.length === 0 ? (
-        <Typography color="text.secondary" variant="body1">
-          No albums yet. Scan your music folder from the Tracks page first.
-        </Typography>
-      ) : null}
-
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 3,
-          gridTemplateColumns: {
-            xs: 'repeat(2, minmax(0, 1fr))',
-            sm: 'repeat(3, minmax(0, 1fr))',
-            md: 'repeat(4, minmax(0, 1fr))',
-            lg: 'repeat(6, minmax(0, 1fr))',
-          },
-        }}
-      >
-        {albums.map((album) => (
-          <Box key={album.id} onClick={() => navigate(`/albums/${album.id}`)}>
-            <Card sx={{ 
-              bgcolor: 'background.paper', 
-              borderRadius: 6, 
-              boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+      </Box>
+      <Box sx={{ px: 2, display: 'flex', flexDirection: 'column' }}>
+        {albumTracks.map((track, index) => (
+          <Box
+            key={track.id}
+            onClick={() => onPlayTrack(track.id)}
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              p: 1,
+              pr: 2,
+              borderRadius: `${vinyl.radius.row}px`,
               cursor: 'pointer',
-              border: '1px solid',
-              borderColor: 'divider',
-              overflow: 'hidden',
+              transition: 'background-color 200ms',
               '&:hover': {
-                bgcolor: alpha(primaryColor, 0.05),
-                transform: 'translateY(-12px)',
-                boxShadow: `0 24px 48px ${alpha(primaryColor, 0.15)}`,
-                borderColor: alpha(primaryColor, 0.3),
-              }
-            }}>
-              <Box sx={{ position: 'relative', pt: '100%', overflow: 'hidden' }}>
-                <CardMedia
-                  component="img"
-                  image={album.cover_art_data_url ?? undefined}
-                  sx={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    width: '100%',
-                    height: '100%',
-                    bgcolor: 'action.hover',
-                    objectFit: 'cover',
-                    transition: 'transform 0.6s ease',
-                    '.MuiCard-root:hover &': {
-                      transform: 'scale(1.1)'
-                    }
-                  }}
-                />
-              </Box>
-              <CardContent sx={{ p: 2.5, '&:last-child': { pb: 2.5 } }}>
-                <Typography variant="subtitle1" noWrap sx={{ fontWeight: 800, mb: 0.2 }}>{album.title}</Typography>
-                <Typography variant="body2" color="text.secondary" noWrap sx={{ fontWeight: 600, opacity: 0.7 }}>{album.artist}</Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 700, px: 1, py: 0.3, borderRadius: 1, bgcolor: 'action.hover', color: 'text.secondary' }}>
-                    {album.track_count} TRK
-                  </Typography>
-                  {album.year && (
-                    <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.disabled' }}>
-                      {album.year}
-                    </Typography>
-                  )}
-                </Box>
-              </CardContent>
-            </Card>
+                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                '& .more-btn': { opacity: 1 }
+              },
+              height: 52,
+              gap: 2,
+            }}
+          >
+            <Typography sx={{ width: 30, textAlign: 'center', color: theme.palette.text.secondary, fontSize: 13, fontWeight: 500 }}>
+              {index + 1}
+            </Typography>
+            <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Typography sx={{ fontWeight: 600, fontSize: 14 }} noWrap>{track.title}</Typography>
+              <Typography sx={{ fontWeight: 400, fontSize: 12, color: theme.palette.text.secondary }} noWrap>{track.artist}</Typography>
+            </Box>
+            <IconButton className="more-btn" size="small" onClick={(e) => e.stopPropagation()} sx={{ opacity: 0, transition: 'opacity 200ms', color: theme.palette.text.secondary }}>
+              <MoreVertRoundedIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+            <Typography sx={{ color: theme.palette.text.secondary, fontSize: 12, minWidth: 40, textAlign: 'right' }}>
+              {formatDuration(track.duration)}
+            </Typography>
           </Box>
         ))}
       </Box>
+    </Box>
+  );
+};
+
+interface AlbumsProps {
+  albums: Album[];
+  detailId?: number | null;
+  tracks: Track[];
+  onSelectAlbum: (id: number) => void;
+  onBack: () => void;
+  onPlayTrack: (id: number) => void;
+}
+
+export const Albums = ({ albums, detailId, tracks, onSelectAlbum, onBack, onPlayTrack }: AlbumsProps) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
+  const detailAlbum = useMemo(() => 
+    detailId ? albums.find(a => a.id === detailId) : null
+  , [detailId, albums]);
+
+  if (detailAlbum) {
+    return (
+      <AlbumDetailsInternal 
+        album={detailAlbum} 
+        tracks={tracks} 
+        onBack={onBack} 
+        onPlayTrack={onPlayTrack} 
+      />
+    );
+  }
+
+  return (
+    <Box 
+      sx={{ 
+        width: '100%', 
+        p: '20px',
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+        gap: '16px',
+        pb: 10
+      }}
+    >
+      {albums.map((album) => (
+        <Box
+          key={album.id}
+          onClick={() => onSelectAlbum(album.id)}
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            cursor: 'pointer',
+            transition: 'transform 200ms ease',
+            '&:hover': {
+              transform: 'scale(1.03)',
+            }
+          }}
+        >
+          <Avatar
+            variant="square"
+            src={album.cover_art_data_url || "/src/assets/logo.png"}
+            sx={{
+              width: '100%',
+              height: 'auto',
+              aspectRatio: '1 / 1',
+              borderRadius: '10px',
+              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+              mb: 1.5,
+              '& img': { objectFit: album.cover_art_data_url ? 'cover' : 'contain', p: album.cover_art_data_url ? 0 : 2 }
+            }}
+          />
+          <Typography sx={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2, mb: 0.5 }} noWrap>{album.title}</Typography>
+          <Typography sx={{ fontWeight: 400, fontSize: 11, color: theme.palette.text.secondary }} noWrap>{album.artist}</Typography>
+        </Box>
+      ))}
     </Box>
   );
 };

@@ -1,77 +1,90 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, CssBaseline } from '@mui/material';
-import { HashRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { Sidebar } from './components/layout/Sidebar';
-import { BottomBar } from './components/layout/BottomBar';
+import { HeaderBar } from './components/layout/HeaderBar';
+import { NavRail } from './components/layout/NavRail';
+import { NowPlaying } from './views/NowPlaying';
+import { Queue } from './views/Queue';
 import { Tracks } from './views/Tracks';
 import { Albums } from './views/Albums';
-import { AlbumDetails } from './views/AlbumDetails';
 import { Artists } from './views/Artists';
-import { ArtistDetails } from './views/ArtistDetails';
 import { Playlists } from './views/Playlists';
-import { NowPlaying } from './views/NowPlaying';
-import { addTrackToPlaylist, createPlaylist, fetchAlbumArt, fetchArtistBio, fetchTrackLyrics, getPlaybackPosMs, listAlbums, listArtists, listPlaylistTracks, listPlaylists, listTracks, pauseAudio, playAudio, removeTrackFromPlaylist, resumeAudio, scanLocalFiles, seekPlaybackMs, setVolume as setPlayerVolume, updateOsMetadata } from './lib/tauri';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
-import type { Album, Artist, ArtistBioPayload, LyricsPayload, Playlist, PlaylistTrack, Track } from './types/library';
-import { ThemeContextProvider } from './lib/ThemeContext';
 import { Settings } from './views/Settings';
+import { fetchAlbumArt, getPlaybackPosMs, listTracks, listAlbums, listArtists, listPlaylists, listPlaylistTracks, createPlaylist as apiCreatePlaylist, addTrackToPlaylist, removeTrackFromPlaylist, scanLocalFiles, pauseAudio, playAudio, resumeAudio, seekPlaybackMs, setVolume as setPlayerVolume, updateOsMetadata } from './lib/tauri';
+import { fetchSyncedLyrics } from './lib/metadata';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import type { LyricsPayload, Track, Album, Artist, Playlist, PlaylistTrack, NavView } from './types/library';
+import { ThemeProvider, useTheme as useAppTheme } from './lib/ThemeContext';
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
+import { getAppTheme } from './theme';
 
 function AppContent() {
-  const location = useLocation();
-  const isNowPlaying = location.pathname.startsWith('/now-playing');
+  const { theme: appTheme, accentColor } = useAppTheme();
+
+  const resolvedMode = useMemo(() => {
+    if (appTheme === 'system') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    return appTheme as 'light' | 'dark';
+  }, [appTheme]);
+
+  const muiTheme = useMemo(
+    () => getAppTheme(resolvedMode, accentColor ?? '#3584E4'),
+    [resolvedMode, accentColor]
+  );
+
+  const vinyl = muiTheme.vinyl;
+  
+  const [navState, setNavState] = useState({
+    view: 'queue' as NavView,
+    detail: null as string | number | null,
+    scrollY: 0,
+  });
+
   const [tracks, setTracks] = useState<Track[]>([]);
   const [albums, setAlbums] = useState<Album[]>([]);
   const [artists, setArtists] = useState<Artist[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [scanning, setScanning] = useState(false);
-  const [scanPath, setScanPath] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [playlistTracks, setPlaylistTracks] = useState<Record<number, PlaylistTrack[]>>({});
+
   const [currentTrackId, setCurrentTrackId] = useState<number | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(0.5);
   const [lyrics, setLyrics] = useState<LyricsPayload | null>(null);
-  const [artistBio, setArtistBio] = useState<ArtistBioPayload | null>(null);
-  const [lyricsLoading, setLyricsLoading] = useState(false);
-  const [artistBioLoading, setArtistBioLoading] = useState(false);
   const [artworkLoading, setArtworkLoading] = useState(false);
   const [playbackPosMs, setPlaybackPosMs] = useState(0);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [playlistTracks, setPlaylistTracks] = useState<Record<number, PlaylistTrack[]>>({});
-  const [newPlaylistName, setNewPlaylistName] = useState('');
   const [queueTrackIds, setQueueTrackIds] = useState<number[]>([]);
   const [queueIndex, setQueueIndex] = useState(-1);
   const [shuffleEnabled, setShuffleEnabled] = useState(false);
   const [repeatMode, setRepeatMode] = useState<'off' | 'all' | 'one'>('off');
   const trackEndHandledRef = useRef<number | null>(null);
+  const rightPanelRef = useRef<HTMLDivElement>(null);
 
   const loadLibrary = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-
     try {
-      const [nextTracks, nextAlbums, nextArtists] = await Promise.all([
+      const [nextTracks, nextAlbums, nextArtists, nextPlaylists] = await Promise.all([
         listTracks(),
         listAlbums(),
         listArtists(),
+        listPlaylists(),
       ]);
-      const nextPlaylists = await listPlaylists();
-      const playlistTrackEntries = await Promise.all(
-        nextPlaylists.map(async (playlist) => [playlist.id, await listPlaylistTracks(playlist.id)] as const)
-      );
 
       setTracks(nextTracks);
       setAlbums(nextAlbums);
       setArtists(nextArtists);
       setPlaylists(nextPlaylists);
-      setPlaylistTracks(Object.fromEntries(playlistTrackEntries));
+
+      const tracksMap: Record<number, PlaylistTrack[]> = {};
+      for (const pl of nextPlaylists) {
+        tracksMap[pl.id] = await listPlaylistTracks(pl.id);
+      }
+      setPlaylistTracks(tracksMap);
+
       setQueueTrackIds((prev) => {
         const valid = prev.filter((id) => nextTracks.some((track) => track.id === id));
         return valid.length > 0 ? valid : nextTracks.map((track) => track.id);
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load library');
-    } finally {
-      setLoading(false);
+      console.error(err);
     }
   }, []);
 
@@ -86,10 +99,6 @@ function AppContent() {
   const currentTrack = useMemo(
     () => tracks.find((track) => track.id === currentTrackId) ?? null,
     [currentTrackId, tracks]
-  );
-  const queueTracks = useMemo(
-    () => queueTrackIds.map((id) => tracks.find((track) => track.id === id)).filter(Boolean) as Track[],
-    [queueTrackIds, tracks]
   );
 
   useEffect(() => {
@@ -115,48 +124,25 @@ function AppContent() {
   useEffect(() => {
     if (!currentTrack) {
       setLyrics(null);
-      setArtistBio(null);
       return;
     }
 
     let cancelled = false;
 
     const loadTrackMetadata = async () => {
-      setLyricsLoading(true);
       try {
-        const nextLyrics = await fetchTrackLyrics(currentTrack.id);
+        const nextLyrics = await fetchSyncedLyrics(
+          currentTrack.artist,
+          currentTrack.title,
+          currentTrack.duration,
+          currentTrack.id
+        );
         if (!cancelled) {
           setLyrics(nextLyrics);
         }
       } catch (err) {
         if (!cancelled) {
           setLyrics(null);
-          setError(err instanceof Error ? err.message : 'Failed to load lyrics');
-        }
-      } finally {
-        if (!cancelled) {
-          setLyricsLoading(false);
-        }
-      }
-
-      if (currentTrack.artist_id === null) {
-        setArtistBio(null);
-        return;
-      }
-
-      setArtistBioLoading(true);
-      try {
-        const nextArtistBio = await fetchArtistBio(currentTrack.artist_id);
-        if (!cancelled) {
-          setArtistBio(nextArtistBio);
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setArtistBio(null);
-        }
-      } finally {
-        if (!cancelled) {
-          setArtistBioLoading(false);
         }
       }
     };
@@ -209,7 +195,10 @@ function AppContent() {
     };
   }, [artworkLoading, currentTrack, loadLibrary]);
 
-  const handlePlayTrack = useCallback(async (track: Track) => {
+  const handlePlayTrack = useCallback(async (trackId: number) => {
+    const track = tracks.find((item) => item.id === trackId);
+    if (!track) return;
+    
     try {
       await playAudio(track.file_path);
       setCurrentTrackId(track.id);
@@ -225,16 +214,15 @@ function AppContent() {
         return next;
       });
       trackEndHandledRef.current = null;
-      setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to start playback');
+      console.error(err);
     }
-  }, []);
+  }, [tracks]);
 
   const handleTogglePlayback = useCallback(async () => {
     if (!currentTrack) {
       if (tracks.length > 0) {
-        await handlePlayTrack(tracks[0]);
+        await handlePlayTrack(tracks[0].id);
       }
       return;
     }
@@ -248,7 +236,7 @@ function AppContent() {
         setIsPlaying(true);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to change playback state');
+      console.error(err);
     }
   }, [currentTrack, handlePlayTrack, isPlaying, tracks]);
 
@@ -292,7 +280,7 @@ function AppContent() {
     }
 
     if (repeatMode === 'one' && fromTrackEnd && currentTrack) {
-      await handlePlayTrack(currentTrack);
+      await handlePlayTrack(currentTrack.id);
       return;
     }
 
@@ -303,7 +291,7 @@ function AppContent() {
       if (repeatMode === 'all') {
         const wrapped = queueTrackIds.length - 1;
         const wrappedTrack = tracks.find((track) => track.id === queueTrackIds[wrapped]);
-        if (wrappedTrack) await handlePlayTrack(wrappedTrack);
+        if (wrappedTrack) await handlePlayTrack(wrappedTrack.id);
       }
       return;
     }
@@ -311,7 +299,7 @@ function AppContent() {
     if (nextIdx >= queueTrackIds.length) {
       if (repeatMode === 'all') {
         const wrappedTrack = tracks.find((track) => track.id === queueTrackIds[0]);
-        if (wrappedTrack) await handlePlayTrack(wrappedTrack);
+        if (wrappedTrack) await handlePlayTrack(wrappedTrack.id);
       } else if (fromTrackEnd) {
         setIsPlaying(false);
       }
@@ -320,7 +308,7 @@ function AppContent() {
 
     const nextTrack = tracks.find((track) => track.id === queueTrackIds[nextIdx]);
     if (nextTrack) {
-      await handlePlayTrack(nextTrack);
+      await handlePlayTrack(nextTrack.id);
     }
   }, [tracks, queueTrackIds, repeatMode, currentTrack, queueIndex, handlePlayTrack]);
 
@@ -356,220 +344,194 @@ function AppContent() {
     };
   }, [handleTogglePlayback, handleSkip, isPlaying]);
 
-  const handleScan = useCallback(async () => {
-    if (!scanPath.trim()) {
-      setError('Enter a music folder path to scan.');
-      return;
-    }
-
-    setScanning(true);
-    setError(null);
-
-    try {
-      await scanLocalFiles(scanPath.trim());
-      await loadLibrary();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to scan the selected folder');
-    } finally {
-      setScanning(false);
-    }
-  }, [loadLibrary, scanPath]);
-
-  const handleCreatePlaylist = useCallback(async () => {
-    if (!newPlaylistName.trim()) {
-      setError('Enter a playlist name.');
-      return;
-    }
-    try {
-      await createPlaylist(newPlaylistName.trim());
-      setNewPlaylistName('');
-      await loadLibrary();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create playlist');
-    }
-  }, [loadLibrary, newPlaylistName]);
-
-  const handleAddCurrentTrackToPlaylist = useCallback(async (playlistId: number) => {
-    if (!currentTrack) {
-      setError('No track selected.');
-      return;
-    }
-    try {
-      await addTrackToPlaylist(playlistId, currentTrack.id);
-      await loadLibrary();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to add track to playlist');
-    }
-  }, [currentTrack, loadLibrary]);
-
-  const handleRemoveTrackFromPlaylist = useCallback(async (playlistId: number, trackId: number) => {
-    try {
-      await removeTrackFromPlaylist(playlistId, trackId);
-      await loadLibrary();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to remove track from playlist');
-    }
-  }, [loadLibrary]);
-
-  const handlePlayNext = useCallback((track: Track) => {
-    setQueueTrackIds((prev) => {
-      const without = prev.filter((id) => id !== track.id);
-      const insertAt = queueIndex >= 0 ? queueIndex + 1 : 0;
-      const next = [...without.slice(0, insertAt), track.id, ...without.slice(insertAt)];
-      return next;
+  const handleNavChange = (view: NavView) => {
+    setNavState({
+      view,
+      detail: null,
+      scrollY: 0
     });
-  }, [queueIndex]);
+    if (rightPanelRef.current) {
+      rightPanelRef.current.scrollTop = 0;
+    }
+  };
 
-  const handleAddToQueue = useCallback((track: Track) => {
-    setQueueTrackIds((prev) => (prev.includes(track.id) ? prev : [...prev, track.id]));
-  }, []);
-
-  const handlePlayQueueIndex = useCallback(async (idx: number) => {
-    const trackId = queueTrackIds[idx];
-    const track = tracks.find((item) => item.id === trackId);
-    if (!track) return;
-    await handlePlayTrack(track);
-  }, [handlePlayTrack, queueTrackIds, tracks]);
-
-  const handleRemoveQueueTrack = useCallback((trackId: number) => {
-    setQueueTrackIds((prev) => {
-      const trackIdx = prev.indexOf(trackId);
-      if (trackIdx === -1) return prev;
-      
-      if (trackIdx < queueIndex) {
-        setQueueIndex(queueIndex - 1);
-      }
-      return prev.filter((id) => id !== trackId);
-    });
-  }, [queueIndex]);
-
-  const handleToggleShuffle = useCallback(() => {
-    setShuffleEnabled((prev) => {
-      const next = !prev;
-      if (next) {
-        setQueueTrackIds((currentIds) => {
-          if (queueIndex < 0) return currentIds;
-          const before = currentIds.slice(0, queueIndex + 1);
-          const remaining = currentIds.slice(queueIndex + 1);
-          for (let i = remaining.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
-          }
-          return [...before, ...remaining];
-        });
-      }
-      return next;
-    });
-  }, [queueIndex]);
+  const renderRightPanelContent = () => {
+    if (navState.view === 'queue') {
+      return (
+        <Queue 
+          tracks={queueTrackIds.map((id) => tracks.find((t) => t.id === id)).filter((t): t is Track => t !== undefined)} 
+          currentTrackId={currentTrackId ?? undefined}
+          onPlayTrack={(id) => void handlePlayTrack(id)} 
+        />
+      );
+    }
+    if (navState.view === 'tracks') {
+      return (
+        <Tracks 
+          tracks={tracks}
+          currentTrackId={currentTrackId ?? undefined}
+          onPlayTrack={(id) => void handlePlayTrack(id)}
+          onScanLocalFiles={async (path) => {
+            try {
+              await scanLocalFiles(path);
+              await loadLibrary();
+            } catch (err) {
+              console.error(err);
+            }
+          }}
+        />
+      );
+    }
+    if (navState.view === 'albums') {
+      return (
+        <Albums 
+          albums={albums} 
+          detailId={navState.detail as number | null}
+          tracks={tracks}
+          onSelectAlbum={(id) => setNavState({ ...navState, view: 'albums', detail: id, scrollY: rightPanelRef.current?.scrollTop || 0 })} 
+          onBack={() => {
+            const scroll = navState.scrollY;
+            setNavState({ ...navState, detail: null });
+            if (rightPanelRef.current) {
+              setTimeout(() => {
+                if (rightPanelRef.current) rightPanelRef.current.scrollTop = scroll;
+              }, 0);
+            }
+          }}
+          onPlayTrack={(id) => void handlePlayTrack(id)}
+        />
+      );
+    }
+    if (navState.view === 'artists') {
+      return (
+        <Artists 
+          artists={artists} 
+          detailId={navState.detail as number | null}
+          albums={albums}
+          tracks={tracks}
+          onSelectArtist={(id) => setNavState({ ...navState, view: 'artists', detail: id, scrollY: rightPanelRef.current?.scrollTop || 0 })} 
+          onBack={() => {
+            const scroll = navState.scrollY;
+            setNavState({ ...navState, detail: null });
+            if (rightPanelRef.current) {
+              setTimeout(() => {
+                if (rightPanelRef.current) rightPanelRef.current.scrollTop = scroll;
+              }, 0);
+            }
+          }}
+          onPlayTrack={(id) => void handlePlayTrack(id)}
+        />
+      );
+    }
+    if (navState.view === 'playlists') {
+      return (
+        <Playlists 
+          playlists={playlists}
+          playlistTracks={playlistTracks}
+          currentTrack={currentTrack}
+          onAddCurrentTrack={async (playlistId) => {
+            if (currentTrackId) {
+              await addTrackToPlaylist(playlistId, currentTrackId);
+              await loadLibrary();
+            }
+          }}
+          onRemoveTrack={async (playlistId, trackId) => {
+            await removeTrackFromPlaylist(playlistId, trackId);
+            await loadLibrary();
+          }}
+          onCreatePlaylist={async (name) => {
+            await apiCreatePlaylist(name);
+            await loadLibrary();
+          }}
+        />
+      );
+    }
+    if (navState.view === 'settings') {
+      return <Settings />;
+    }
+    return null;
+  };
 
   return (
-    <>
-      <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-        {!isNowPlaying && <Sidebar />}
-        <Box component="main" sx={{ flexGrow: 1, p: isNowPlaying ? 0 : 3, mb: '90px', overflowY: 'auto' }}>
-          <Routes>
-            <Route path="/" element={<Navigate to="/tracks" replace />} />
-              <Route
-                path="/tracks"
-                element={
-                  <Tracks
-                    tracks={tracks}
-                    loading={loading}
-                    scanning={scanning}
-                    error={error}
-                    scanPath={scanPath}
-                    currentTrackId={currentTrackId}
-                    currentTrack={currentTrack}
-                    lyrics={lyrics}
-                    lyricsLoading={lyricsLoading}
-                    artistBio={artistBio}
-                    artistBioLoading={artistBioLoading}
-                    playbackPosMs={playbackPosMs}
-                    onScanPathChange={setScanPath}
-                    onScan={handleScan}
-                    onPlayTrack={handlePlayTrack}
-                    onPlayNext={handlePlayNext}
-                    onAddToQueue={handleAddToQueue}
-                  />
-                }
-              />
-              <Route path="/albums" element={<Albums albums={albums} loading={loading} />} />
-              <Route path="/albums/:id" element={
-                <AlbumDetails 
-                  albums={albums} 
-                  tracks={tracks}
-                  currentTrackId={currentTrackId}
-                  onPlayTrack={handlePlayTrack}
-                />
-              } />
-              <Route path="/artists" element={<Artists artists={artists} loading={loading} />} />
-              <Route path="/artists/:id" element={
-                <ArtistDetails 
-                  artists={artists} 
-                  tracks={tracks} 
-                  currentTrackId={currentTrackId}
-                  onPlayTrack={handlePlayTrack}
-                />
-              } />
-              <Route
-                path="/now-playing"
-                element={
-                  <NowPlaying
-                    currentTrack={currentTrack}
-                    lyrics={lyrics}
-                    playbackPosMs={playbackPosMs}
-                  />
-                }
-              />
-              <Route
-                path="/playlists"
-                element={
-                  <Playlists
-                    playlists={playlists}
-                    playlistTracks={playlistTracks}
-                    currentTrack={currentTrack}
-                    newPlaylistName={newPlaylistName}
-                    onNewPlaylistNameChange={setNewPlaylistName}
-                    onCreatePlaylist={handleCreatePlaylist}
-                    onAddCurrentTrack={handleAddCurrentTrackToPlaylist}
-                    onRemoveTrack={handleRemoveTrackFromPlaylist}
-                  />
-                }
-              />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
-          </Box>
-          <BottomBar
-            currentTrack={currentTrack}
-            queueTracks={queueTracks}
-            queueIndex={queueIndex}
-            isPlaying={isPlaying}
-            playbackPosMs={playbackPosMs}
-            volume={volume}
-            shuffleEnabled={shuffleEnabled}
-            repeatMode={repeatMode}
-            onTogglePlayback={handleTogglePlayback}
-            onPrevious={() => void handleSkip(-1)}
-            onNext={() => void handleSkip(1)}
-            onVolumeChange={setVolume}
-            onSeek={handleSeek}
-            onPlayQueueIndex={(idx) => void handlePlayQueueIndex(idx)}
-            onRemoveQueueTrack={handleRemoveQueueTrack}
-            onToggleShuffle={handleToggleShuffle}
-            onCycleRepeatMode={() => setRepeatMode((prev) => (prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off'))}
-          />
+    <MuiThemeProvider theme={muiTheme}>
+      <CssBaseline />
+      <Box 
+        sx={{ 
+          display: 'flex', 
+          height: '100vh', 
+          width: '100vw', 
+          overflow: 'hidden', 
+          borderRadius: `${vinyl?.radius?.window ?? 12}px`,
+          border: '0.5px solid rgba(0,0,0,0.15)',
+          boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+        }}
+      >
+      {/* Left Panel: Player / Lyrics */}
+      <Box 
+        sx={{ 
+          width: 320, 
+          flexShrink: 0, 
+          backgroundColor: vinyl?.radius ? (resolvedMode === 'dark' ? '#242424' : '#FFFFFF') : 'transparent',
+          display: 'flex',
+          flexDirection: 'column',
+          borderTopLeftRadius: `${vinyl?.radius?.window ?? 12}px`,
+          borderBottomLeftRadius: `${vinyl?.radius?.window ?? 12}px`,
+          position: 'relative',
+        }}
+      >
+        <NowPlaying
+          currentTrack={currentTrack}
+          lyrics={lyrics}
+          playbackPosMs={playbackPosMs}
+          isPlaying={isPlaying}
+          volume={volume}
+          shuffleEnabled={shuffleEnabled}
+          repeatMode={repeatMode}
+          onTogglePlayback={handleTogglePlayback}
+          onPrevious={() => void handleSkip(-1)}
+          onNext={() => void handleSkip(1)}
+          onSeek={handleSeek}
+          onVolumeChange={setVolume}
+          onToggleShuffle={() => setShuffleEnabled(!shuffleEnabled)}
+          onCycleRepeatMode={() => setRepeatMode(prev => prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off')}
+        />
+      </Box>
+
+      {/* Right Panel: Queue */}
+      <Box 
+        sx={{ 
+          flexGrow: 1, 
+          backgroundColor: resolvedMode === 'dark' ? '#2A2A2A' : '#F5F5F5',
+          display: 'flex',
+          flexDirection: 'column',
+          borderTopRightRadius: `${vinyl?.radius?.window ?? 12}px`,
+          borderBottomRightRadius: `${vinyl?.radius?.window ?? 12}px`,
+        }}
+      >
+        <HeaderBar />
+        <NavRail activeView={navState.view} onChange={handleNavChange} />
+        <Box 
+          ref={rightPanelRef}
+          sx={{ 
+            flexGrow: 1, 
+            overflowY: 'auto', 
+            overflowX: 'hidden',
+            display: 'flex',
+          }}
+        >
+          {renderRightPanelContent()}
         </Box>
-    </>
+      </Box>
+    </Box>
+    </MuiThemeProvider>
   );
 }
 
 export default function App() {
   return (
-    <ThemeContextProvider>
-      <CssBaseline />
-      <HashRouter>
-        <AppContent />
-      </HashRouter>
-    </ThemeContextProvider>
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }
+

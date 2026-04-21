@@ -73,3 +73,5 @@ export interface PlaylistTrack {
   album: string;
   duration: number;
 }
+
+export type NavView = 'queue' | 'tracks' | 'albums' | 'artists' | 'playlists' | 'settings';

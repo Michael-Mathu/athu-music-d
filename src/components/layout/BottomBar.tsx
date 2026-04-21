@@ -1,19 +1,18 @@
-import { Avatar, Box, Drawer, IconButton, List, ListItemButton, ListItemText, Slider, Stack, Typography, alpha } from '@mui/material';
-import PlayArrowIcon from '@mui/icons-material/PlayArrow';
-import SkipNextIcon from '@mui/icons-material/SkipNext';
-import SkipPreviousIcon from '@mui/icons-material/SkipPrevious';
-import PauseIcon from '@mui/icons-material/Pause';
-import VolumeUpIcon from '@mui/icons-material/VolumeUp';
-import MusicNoteIcon from '@mui/icons-material/MusicNote';
-import QueueMusicIcon from '@mui/icons-material/QueueMusic';
-import ShuffleIcon from '@mui/icons-material/Shuffle';
-import RepeatIcon from '@mui/icons-material/Repeat';
-import RepeatOneIcon from '@mui/icons-material/RepeatOne';
-import CloseIcon from '@mui/icons-material/Close';
+import { Avatar, Box, Drawer, IconButton, List, ListItemButton, ListItemText, Slider, Stack, Typography, alpha, useTheme } from '@mui/material';
+import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
+import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded';
+import SkipPreviousRoundedIcon from '@mui/icons-material/SkipPreviousRounded';
+import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
+import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
+import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
+import QueueMusicRoundedIcon from '@mui/icons-material/QueueMusicRounded';
+import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
+import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded';
+import RepeatOneRoundedIcon from '@mui/icons-material/RepeatOneRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import type { Track } from '../../types/library';
-import { useAppTheme } from '../../lib/ThemeContext';
 
 interface BottomBarProps {
   currentTrack: Track | null;
@@ -61,34 +60,29 @@ export const BottomBar = ({
   onCycleRepeatMode,
 }: BottomBarProps) => {
   const [queueOpen, setQueueOpen] = useState(false);
-  const { primaryColor, mode } = useAppTheme();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const durationMs = currentTrack ? currentTrack.duration * 1000 : 0;
   const clampedPos = Math.max(0, Math.min(playbackPosMs, durationMs || playbackPosMs));
   const posSeconds = Math.floor(clampedPos / 1000);
   
   const repeatIcon = useMemo(() => {
-    if (repeatMode === 'one') return <RepeatOneIcon />;
-    return <RepeatIcon />;
+    if (repeatMode === 'one') return <RepeatOneRoundedIcon />;
+    return <RepeatRoundedIcon />;
   }, [repeatMode]);
 
   return (
     <Box
       sx={{
-        position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 100,
-        bgcolor: alpha(mode === 'dark' ? '#1A1A1A' : '#F3F4F9', 0.95),
-        backdropFilter: 'blur(20px)',
-        borderTop: '1px solid',
-        borderColor: 'divider',
+        height: 84,
+        bgcolor: 'background.paper',
+        borderTop: `1px solid ${theme.palette.divider}`,
         display: 'flex',
         alignItems: 'center',
-        px: 4,
-        zIndex: (theme) => theme.zIndex.drawer + 1,
-        transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        px: 3,
+        zIndex: 1100,
+        boxShadow: isDark ? 'inset 0 1px 0 rgba(255,255,255,0.02)' : 'none',
       }}
     >
       {/* Current Track Info */}
@@ -97,15 +91,15 @@ export const BottomBar = ({
           variant="rounded"
           src={currentTrack?.cover_art_data_url ?? undefined}
           sx={{ 
-            width: 64, 
-            height: 64, 
-            borderRadius: 3, 
-            bgcolor: 'background.paper', 
-            mr: 2.5,
-            boxShadow: '0 8px 16px rgba(0,0,0,0.1)' 
+            width: 52, 
+            height: 52, 
+            borderRadius: '8px', 
+            bgcolor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)', 
+            mr: 2,
+            border: `1px solid ${theme.palette.divider}`
           }}
         >
-          <MusicNoteIcon sx={{ opacity: 0.2 }} />
+          <MusicNoteRoundedIcon sx={{ opacity: 0.1 }} />
         </Avatar>
         <Box 
           component={Link} 
@@ -113,45 +107,45 @@ export const BottomBar = ({
           sx={{ 
             color: 'inherit', 
             textDecoration: 'none',
-            maxWidth: '100%',
+            maxWidth: 'calc(100% - 70px)',
             overflow: 'hidden'
           }}
         >
-          <Typography variant="body1" noWrap sx={{ fontWeight: 800, letterSpacing: -0.2 }}>
-            {currentTrack?.title ?? 'No track selected'}
+          <Typography variant="body1" noWrap sx={{ fontWeight: 700, fontSize: '0.95rem' }}>
+            {currentTrack?.title ?? 'No track playing'}
           </Typography>
-          <Typography variant="body2" color="text.secondary" noWrap sx={{ fontWeight: 500, opacity: 0.7 }}>
-            {currentTrack ? `${currentTrack.artist}` : 'Scan and play a track'}
+          <Typography variant="body2" color="text.secondary" noWrap sx={{ fontWeight: 500, opacity: 0.7, fontSize: '0.85rem' }}>
+            {currentTrack ? `${currentTrack.artist}` : 'Select a track to play'}
           </Typography>
         </Box>
       </Box>
 
       {/* Playback Controls & Progress */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', mb: 1 }}>
-          <IconButton onClick={onPrevious} size="medium"><SkipPreviousIcon /></IconButton>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 0.5 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <IconButton onClick={onPrevious} size="small" sx={{ opacity: 0.8 }}><SkipPreviousRoundedIcon /></IconButton>
           <IconButton 
             onClick={onTogglePlayback}
             sx={{ 
-              width: 56,
-              height: 56,
+              width: 44,
+              height: 44,
               bgcolor: 'primary.main',
-              color: 'primary.contrastText',
+              color: 'white',
               '&:hover': {
-                bgcolor: alpha(primaryColor, 0.8),
+                bgcolor: 'primary.dark',
                 transform: 'scale(1.05)'
               },
-              transition: 'all 0.2s',
-              boxShadow: `0 8px 24px ${alpha(primaryColor, 0.35)}`
+              transition: '0.2s cubic-bezier(0.25, 0.1, 0.25, 1.0)',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
             }}
           >
-            {isPlaying ? <PauseIcon fontSize="large" /> : <PlayArrowIcon fontSize="large" />}
+            {isPlaying ? <PauseRoundedIcon /> : <PlayArrowRoundedIcon />}
           </IconButton>
-          <IconButton onClick={onNext} size="medium"><SkipNextIcon /></IconButton>
+          <IconButton onClick={onNext} size="small" sx={{ opacity: 0.8 }}><SkipNextRoundedIcon /></IconButton>
         </Stack>
         
-        <Box sx={{ width: '100%', maxWidth: 500, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Typography variant="caption" sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', opacity: 0.5 }}>
+        <Box sx={{ width: '100%', maxWidth: 450, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', opacity: 0.5, width: 35 }}>
             {currentTrack ? formatDuration(posSeconds) : '0:00'}
           </Typography>
           <Slider
@@ -170,49 +164,48 @@ export const BottomBar = ({
                 transition: '0.2s',
               },
               '&:hover .MuiSlider-thumb': {
-                width: 14,
-                height: 14,
+                width: 10,
+                height: 10,
               },
-              '& .MuiSlider-rail': {
-                opacity: 0.1,
-              }
             }}
           />
-          <Typography variant="caption" sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', opacity: 0.5 }}>
+          <Typography variant="caption" sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums', opacity: 0.5, width: 35, textAlign: 'right' }}>
             {currentTrack ? formatDuration(currentTrack.duration) : '0:00'}
           </Typography>
         </Box>
       </Box>
 
       {/* Volume & Additional Actions */}
-      <Box sx={{ width: '30%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 1 }}>
+      <Box sx={{ width: '30%', display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5 }}>
         <IconButton 
+          size="small"
           color={shuffleEnabled ? 'primary' : 'default'} 
           onClick={onToggleShuffle}
-          sx={{ bgcolor: shuffleEnabled ? alpha(primaryColor, 0.1) : 'transparent' }}
+          sx={{ bgcolor: shuffleEnabled ? alpha(theme.palette.primary.main, 0.1) : 'transparent' }}
         >
-          <ShuffleIcon fontSize="small" />
+          <ShuffleRoundedIcon fontSize="small" />
         </IconButton>
         <IconButton 
+          size="small"
           color={repeatMode === 'off' ? 'default' : 'primary'} 
           onClick={onCycleRepeatMode}
-          sx={{ bgcolor: repeatMode !== 'off' ? alpha(primaryColor, 0.1) : 'transparent' }}
+          sx={{ bgcolor: repeatMode !== 'off' ? alpha(theme.palette.primary.main, 0.1) : 'transparent' }}
         >
           {repeatIcon}
         </IconButton>
-        <IconButton onClick={() => setQueueOpen(true)}>
-          <QueueMusicIcon fontSize="small" />
+        <IconButton size="small" onClick={() => setQueueOpen(true)}>
+          <QueueMusicRoundedIcon fontSize="small" />
         </IconButton>
         
-        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', ml: 2, minWidth: 140 }}>
-          <VolumeUpIcon sx={{ color: 'text.secondary', fontSize: 20, opacity: 0.5 }} />
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', ml: 1, width: 120 }}>
+          <VolumeUpRoundedIcon sx={{ color: 'text.secondary', fontSize: 18, opacity: 0.5 }} />
           <Slider
             size="small"
             value={Math.round(volume * 100)}
             onChange={(_, value) => onVolumeChange((value as number) / 100)}
             sx={{ 
-              width: 100,
-              '& .MuiSlider-thumb': { width: 12, height: 12 }
+              width: 80,
+              '& .MuiSlider-thumb': { width: 10, height: 10 }
             }}
           />
         </Stack>
@@ -225,36 +218,36 @@ export const BottomBar = ({
         slotProps={{ 
           paper: { 
             sx: { 
-              width: 400, 
-              bgcolor: 'background.default',
-              borderRadius: '24px 0 0 24px',
+              width: 380, 
+              bgcolor: 'background.paper',
+              boxShadow: '-10px 0 30px rgba(0,0,0,0.1)',
               p: 2
             } 
           } 
         }}
       >
-        <Box sx={{ p: 2, mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <Typography variant="h5" sx={{ fontWeight: 900 }}>Queue</Typography>
-          <IconButton onClick={() => setQueueOpen(false)} sx={{ bgcolor: 'action.hover' }}>
-            <CloseIcon />
+        <Box sx={{ p: 1, mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>Queue</Typography>
+          <IconButton onClick={() => setQueueOpen(false)}>
+            <CloseRoundedIcon />
           </IconButton>
         </Box>
-        <List sx={{ px: 1 }}>
+        <List sx={{ px: 0.5 }}>
           {queueTracks.map((track, idx) => (
             <ListItemButton
               key={`${track.id}-${idx}`}
               onClick={() => onPlayQueueIndex(idx)}
               sx={{ 
-                borderRadius: 4, 
-                mb: 1, 
-                py: 1.5,
-                bgcolor: idx === queueIndex ? alpha(primaryColor, 0.15) : 'transparent',
-                '&:hover': { bgcolor: alpha(primaryColor, 0.05) }
+                borderRadius: '6px', 
+                mb: 0.5, 
+                py: 1,
+                bgcolor: idx === queueIndex ? alpha(theme.palette.primary.main, 0.08) : 'transparent',
+                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)' }
               }}
             >
               <ListItemText
-                primary={<Typography variant="body1" sx={{ fontWeight: 700 }}>{track.title}</Typography>}
-                secondary={<Typography variant="body2" sx={{ opacity: 0.6 }}>{track.artist}</Typography>}
+                primary={<Typography variant="body2" sx={{ fontWeight: idx === queueIndex ? 700 : 500 }}>{track.title}</Typography>}
+                secondary={<Typography variant="caption" sx={{ opacity: 0.6 }}>{track.artist}</Typography>}
               />
               <IconButton
                 edge="end"
@@ -263,8 +256,9 @@ export const BottomBar = ({
                   event.stopPropagation();
                   onRemoveQueueTrack(track.id);
                 }}
+                sx={{ opacity: 0.5, '&:hover': { opacity: 1 } }}
               >
-                <CloseIcon fontSize="small" />
+                <CloseRoundedIcon sx={{ fontSize: 16 }} />
               </IconButton>
             </ListItemButton>
           ))}
@@ -273,3 +267,4 @@ export const BottomBar = ({
     </Box>
   );
 };
+

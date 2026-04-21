@@ -1,41 +1,53 @@
 # Athu Music D
 
-Athu Music D is an ultra-fast, offline-first native Desktop Music Player built using Tauri, Rust, and React. 
+![Athu Music Logo](src/assets/logo.png)
 
-Designed for incredible performance and premium visual aesthetics, Athu Music D manages large local music libraries seamlessly without relying on streaming subscription limits.
+Athu Music D is an ultra-fast, offline-first native Desktop Music Player built using Tauri v2, Rust, and React 19.
+
+It features a premium, pixel-accurate recreation of the **Vinyl** music player UI, adhering strictly to the **GTK4/Libadwaita** design language for a clean, modern, and native feel on Windows and Linux.
 
 ## 🚀 Key Features
 
-*   **Immersive Now Playing View**: High quality reactive visual design with full-bleed dynamically blurred album artwork covering your entire OS window.
-*   **Synced Lyrics**: Embedded MP3 tag and sidecar `.lrc` synchronization support built directly into the UI.
-*   **Wikipedia Integration**: Deep discography and artist fact-scraping baked into the library views.
-*   **Global OS Hardware Sync**: Interacts deeply with Windows hardware media keys safely tracking your play queue in the background.
+- **Dual-Panel Vinyl UI**: A dedicated left panel for playback and synced lyrics, and a navigable right panel for library management.
+- **Libadwaita Aesthetic**: Dark-themed, flat surfaces with subtle 0.5px borders, rounded corners (12px), and a focus on content over chrome.
+- **Full Library Management**:
+  - **Tracks**: Local file scanning and metadata parsing.
+  - **Albums**: Grid and detail views with cover art support.
+  - **Artists**: Artist biographies fetched from Wikipedia/Last.fm.
+  - **Playlists**: Create and manage custom music collections.
+- **Stability Features**: Global Error Boundary, safe Theme Context with system theme sync, and robust state persistence.
+- **Synced Lyrics**: Support for embedded and sidecar LRC files.
+- **Performance**: Built on Tauri v2 for minimal memory footprint and native performance.
 
 ## 🛠️ Technology Stack
 
-1.  **Frontend**: React 19 + TypeScript + Vite.
-2.  **UI/Styling**: `@mui/material` for strict, highly animated interface styling. 
-3.  **Backend Daemon**: Rust `Tauri` v2 daemon handling aggressive offline SQLite `rusqlite` database pooling and native OS hooks.
-4.  **Audio Engine**: `rodio` library mapping system sink buffers alongside `lofty` ID3v2 tag parsing.
-5.  **Global Keys**: `souvlaki` crate bound manually to Windows D-Bus/SMTC interfaces.
+1. **Frontend**: React 19 + TypeScript + Vite.
+2. **UI/Styling**: MUI v6 (configured for Libadwaita aesthetic) + Vanilla CSS.
+3. **Backend**: Rust (Tauri v2) handling file I/O, SQLite database, and audio playback.
+4. **Typography**: Roboto Serif for a refined, serif-based readability.
 
 ## 💻 Development & Build Setup
 
 ### Prerequisites
-*   Node.js v20+
-*   Rust Toolchain (Cargo / rustc)
-*   Windows Native MSVC Build Tools.
+- Node.js v20+
+- Rust Toolchain (Cargo / rustc)
+- Windows: C++ Build Tools (MSVC)
+- Linux: `libadwaita-1-dev`, `webkit2gtk-4.1-dev`
 
 ### Running Debug Mode
-To run a temporary development application window spanning the Vite hot-reloading context:
 ```bash
 npm install
 npm run tauri dev
 ```
 
-### Compiling Executable Beta
-To permanently bake a highly optimized, LTO-enabled rust release `athu-music-d.exe` binary:
+### Compiling Executable
 ```bash
 npm run tauri build
 ```
-Once complete, the raw binary `.exe` will map towards `src-tauri/target/release/athu-music-d.exe` and the `.msi` setup installer will populate within `bundle/nsis/`.
+The resulting binary will be located in `src-tauri/target/release/`.
+
+## 🎨 Design System
+The application uses a custom theme implementation in `src/theme/index.ts` and `src/lib/ThemeContext.tsx`.
+- **Accent Color**: Defaults to Adwaita Blue (`#3584E4`), configurable in Settings.
+- **Surface Colors**: Dark mode uses `#242424` for the left panel and `#2A2A2A` for the right panel.
+- **Typography**: Primary font is **Roboto Serif**.

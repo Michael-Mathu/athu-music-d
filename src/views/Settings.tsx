@@ -1,109 +1,140 @@
-import { Box, Typography, Switch, FormControlLabel, Paper, Stack, IconButton } from '@mui/material';
-import { useAppTheme } from '../lib/ThemeContext';
-import CircleIcon from '@mui/icons-material/Circle';
-import ContrastIcon from '@mui/icons-material/Contrast';
+import { Box, Typography, Button } from '@mui/material';
+import { useTheme } from '../lib/ThemeContext';
 
-const PRESET_COLORS = [
-  '#ffab40', // Athu Orange
-  '#D0BCFF', // Lavender
-  '#77D8D8', // Teal
-  '#FF8A80', // Soft Red
-  '#A5D6A7', // Light Green
-  '#90CAF9', // Soft Blue
+const ACCENT_COLORS = [
+  '#3584E4', // Blue (default)
+  '#E9A44A', // Amber
+  '#E05C5C', // Red
+  '#57A55A', // Green
+  '#A855F7', // Purple
+  '#EC4899', // Pink
 ];
 
 export const Settings = () => {
-  const { mode, primaryColor, setPrimaryColor, toggleMode } = useAppTheme();
+  const { theme, setTheme, accentColor, setAccentColor } = useTheme();
+
+  const SectionHeader = ({ children }: { children: React.ReactNode }) => (
+    <Typography sx={{ fontSize: 13, fontWeight: 700, mt: 3, mb: 2, color: 'text.secondary', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+      {children}
+    </Typography>
+  );
+
+  const SettingRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
+    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', py: 1.5 }}>
+      <Typography sx={{ fontSize: 14, fontWeight: 500 }}>{label}</Typography>
+      {children}
+    </Box>
+  );
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: 4 }}>
-      <Typography variant="h4" sx={{ mb: 4, fontWeight: 800 }}>Settings</Typography>
-
-      <Stack spacing={4}>
-        {/* Themes and Colors Section */}
-        <section>
-          <Typography variant="h6" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1.5 }}>
-            <ContrastIcon color="primary" /> Themes and Colors
-          </Typography>
-          
-          <Paper variant="outlined" sx={{ p: 3, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={4}>
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>Appearance</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Switch between light and dark visual modes.
-                </Typography>
-                <FormControlLabel
-                  control={<Switch checked={mode === 'dark'} onChange={toggleMode} />}
-                  label={mode === 'dark' ? "Dark Mode Active" : "Light Mode Active"}
-                  sx={{ ml: 0 }}
-                />
-              </Box>
-
-              <Box sx={{ flex: 1 }}>
-                <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 700 }}>Accent Color</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                  Personalize the platform with your favorite color.
-                </Typography>
-                
-                <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
-                  {PRESET_COLORS.map(color => (
-                    <IconButton 
-                      key={color} 
-                      onClick={() => setPrimaryColor(color)}
-                      sx={{ 
-                        p: 0.5, 
-                        border: '2px solid', 
-                        borderColor: primaryColor === color ? 'primary.main' : 'transparent',
-                        transition: '0.2s'
-                      }}
-                    >
-                      <CircleIcon sx={{ color }} />
-                    </IconButton>
-                  ))}
-                </Stack>
-
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Typography variant="body2">Custom Color:</Typography>
-                  <Box
-                    component="input"
-                    type="color"
-                    value={primaryColor}
-                    onChange={(e: any) => setPrimaryColor(e.target.value)}
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      border: 'none',
-                      borderRadius: '50%',
-                      cursor: 'pointer',
-                      bgcolor: 'transparent',
-                      '&::-webkit-color-swatch-wrapper': { p: 0 },
-                      '&::-webkit-color-swatch': { border: 'none', borderRadius: '50%', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }
-                    }}
-                  />
-                  <Typography variant="body2" sx={{ fontSize: '0.8rem', opacity: 0.6 }}>{primaryColor.toUpperCase()}</Typography>
-                </Box>
-              </Box>
-            </Stack>
-          </Paper>
-        </section>
-
-        {/* Metadata section placeholder */}
-        <section>
-          <Typography variant="h6" sx={{ mb: 2 }}>Metadata & APIs</Typography>
-          <Paper variant="outlined" sx={{ p: 3, opacity: 0.5 }}>
-            <Typography variant="body2">
-              Advanced metadata settings (Last.fm, Fanart.tv keys) will be implemented in Phase 3.
-            </Typography>
-          </Paper>
-        </section>
-
-        <Box sx={{ pt: 4, textAlign: 'center' }}>
-          <Typography variant="caption" color="text.secondary">
-            Athu Music D • Material You Version 1.0
-          </Typography>
+    <Box sx={{ width: '100%', px: 4, pb: 10 }}>
+      <SectionHeader>Appearance</SectionHeader>
+      
+      <SettingRow label="Theme">
+        <Box sx={{ display: 'flex', bgcolor: 'rgba(255,255,255,0.05)', borderRadius: '8px', p: 0.5 }}>
+          {(['light', 'dark', 'system'] as const).map((m) => (
+            <Box
+              key={m}
+              onClick={() => setTheme(m)}
+              sx={{
+                px: 2,
+                py: 0.5,
+                borderRadius: '6px',
+                cursor: 'pointer',
+                fontSize: 13,
+                fontWeight: 600,
+                bgcolor: theme === m ? 'var(--adw-accent, #3584E4)' : 'transparent',
+                color: theme === m ? '#FFFFFF' : 'text.secondary',
+                textTransform: 'capitalize',
+                transition: 'all 200ms',
+                '&:hover': {
+                  color: theme === m ? '#FFFFFF' : 'text.primary',
+                }
+              }}
+            >
+              {m}
+            </Box>
+          ))}
         </Box>
-      </Stack>
+      </SettingRow>
+
+      <SettingRow label="Accent color">
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          {ACCENT_COLORS.map((color) => (
+            <Box
+              key={color}
+              onClick={() => setAccentColor(color)}
+              sx={{
+                width: 20,
+                height: 20,
+                borderRadius: '50%',
+                bgcolor: color,
+                cursor: 'pointer',
+                border: accentColor === color ? '2px solid #FFFFFF' : 'none',
+                boxShadow: accentColor === color ? '0 0 0 1px rgba(0,0,0,0.2)' : 'none',
+                transition: 'transform 200ms',
+                '&:hover': {
+                  transform: 'scale(1.2)',
+                }
+              }}
+            />
+          ))}
+        </Box>
+      </SettingRow>
+
+      <SectionHeader>Library</SectionHeader>
+      
+      <SettingRow label="Music folder">
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Typography sx={{ fontSize: 13, color: 'text.secondary' }}>
+            C:\Users\micha\Music
+          </Typography>
+          <Button 
+            size="small" 
+            variant="outlined"
+            sx={{ 
+              borderRadius: '8px', 
+              textTransform: 'none', 
+              fontSize: 12, 
+              borderColor: 'rgba(255,255,255,0.1)',
+              color: 'text.primary'
+            }}
+          >
+            Change
+          </Button>
+        </Box>
+      </SettingRow>
+
+      <Box sx={{ mt: 2 }}>
+        <Button
+          fullWidth
+          variant="contained"
+          sx={{
+            bgcolor: 'rgba(255,255,255,0.05)',
+            color: 'text.primary',
+            borderRadius: '8px',
+            textTransform: 'none',
+            fontSize: 13,
+            fontWeight: 600,
+            py: 1,
+            boxShadow: 'none',
+            '&:hover': {
+              bgcolor: 'rgba(255,255,255,0.1)',
+              boxShadow: 'none',
+            }
+          }}
+        >
+          Rescan library
+        </Button>
+      </Box>
+
+      <SectionHeader>About</SectionHeader>
+      
+      <Box sx={{ py: 1 }}>
+        <Typography sx={{ fontSize: 16, fontWeight: 700, mb: 0.5 }}>Athu Music D</Typography>
+        <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 1 }}>v0.2.0</Typography>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Built with Tauri + React</Typography>
+      </Box>
     </Box>
   );
 };

@@ -1,136 +1,189 @@
-import { Box, CircularProgress, Typography, alpha } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
-import { useNavigate } from 'react-router-dom';
-import type { Artist } from '../types/library';
-import { useArtistImage } from '../lib/metadata';
+import { Box, Typography, Avatar, IconButton } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
+import { Artist, Album, Track, ArtistBioPayload } from '../types/library';
+import { useArtistImage, fetchArtistMetadata } from '../lib/metadata';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import { useState, useEffect, useMemo } from 'react';
 
-interface ArtistCardProps {
+const formatDuration = (duration: number) => {
+  const minutes = Math.floor(duration / 60);
+  const seconds = Math.floor(duration % 60);
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+};
+
+interface ArtistDetailsProps {
   artist: Artist;
+  albums: Album[];
+  tracks: Track[];
+  onBack: () => void;
+  onPlayTrack: (id: number) => void;
 }
 
-const ArtistCard = ({ artist }: ArtistCardProps) => {
-  const navigate = useNavigate();
-  const { imageUrl, loading } = useArtistImage(artist.name);
+const ArtistDetailsInternal = ({ artist, albums, tracks, onBack, onPlayTrack }: ArtistDetailsProps) => {
+  const theme = useTheme();
+  const vinyl = theme.vinyl;
+  const isDark = theme.palette.mode === 'dark';
+  const { imageUrl } = useArtistImage(artist.name);
+  const [bio, setBio] = useState<ArtistBioPayload | null>(null);
+
+  useEffect(() => {
+    fetchArtistMetadata(artist.name, artist.id).then(setBio);
+  }, [artist]);
+
+  const artistAlbums = useMemo(() => albums.filter(a => a.artist_id === artist.id), [artist.id, albums]);
+  const artistTracks = useMemo(() => tracks.filter(t => t.artist_id === artist.id), [artist.id, tracks]);
+
+  return (
+    <Box sx={{ width: '100%', pb: 10, px: 3, pt: 2 }}>
+      <Box sx={{ mb: 2 }}>
+        <IconButton onClick={onBack} sx={{ color: theme.palette.text.primary }}>
+          <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
+        </IconButton>
+      </Box>
+      <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', mb: 6 }}>
+        <Avatar src={imageUrl || undefined} sx={{ width: 180, height: 180, mb: 3, bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', fontSize: 64 }} />
+        <Typography sx={{ fontWeight: 700, fontSize: 28, mb: 1 }}>{artist.name}</Typography>
+        <Typography sx={{ color: theme.palette.text.secondary, fontSize: 14 }}>
+          {artist.album_count || 0} Albums • {artist.track_count || 0} Tracks
+        </Typography>
+      </Box>
+      <Box sx={{ mb: 6 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 2 }}>About</Typography>
+        <Box sx={{ bgcolor: '#2A2A2A', borderRadius: '10px', p: '16px', border: '0.5px solid rgba(255,255,255,0.08)' }}>
+          {bio ? (
+            <>
+              <Typography sx={{ fontSize: 14, lineHeight: 1.7, mb: 2, color: theme.palette.text.primary }} dangerouslySetInnerHTML={{ __html: bio.biography }} />
+              <a href={bio.source_url || '#'} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--adw-accent, #3584E4)', fontSize: '14px', textDecoration: 'none', fontWeight: 600, display: 'inline-block' }}>
+                Read more on Wikipedia →
+              </a>
+            </>
+          ) : (
+            <Typography sx={{ fontSize: 14, color: theme.palette.text.secondary }}>Loading biography...</Typography>
+          )}
+        </Box>
+      </Box>
+      <Box sx={{ mb: 4 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 16, mb: 2 }}>Discography</Typography>
+        {artistAlbums.length > 0 && (
+          <Box sx={{ mb: 4 }}>
+            <Typography sx={{ fontWeight: 600, fontSize: 14, color: theme.palette.text.secondary, mb: 1 }}>Albums</Typography>
+            <Box sx={{ display: 'flex', gap: 2, overflowX: 'auto', pb: 2, px: 1 }}>
+              {artistAlbums.map(album => (
+                <Box key={album.id} sx={{ width: 120, flexShrink: 0 }}>
+                  <Avatar variant="square" src={album.cover_art_data_url || undefined} sx={{ width: 120, height: 120, borderRadius: '8px', mb: 1 }} />
+                  <Typography sx={{ fontSize: 12, fontWeight: 600 }} noWrap>{album.title}</Typography>
+                  <Typography sx={{ fontSize: 11, color: theme.palette.text.secondary }}>{album.year}</Typography>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        )}
+        <Box>
+          <Typography sx={{ fontWeight: 600, fontSize: 14, color: theme.palette.text.secondary, mb: 1 }}>All Tracks</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+            {artistTracks.map((track) => (
+              <Box key={track.id} onClick={() => onPlayTrack(track.id)} sx={{ display: 'flex', alignItems: 'center', p: 1, pr: 2, borderRadius: `${vinyl.radius.row}px`, cursor: 'pointer', transition: 'background-color 200ms', '&:hover': { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)', '& .more-btn': { opacity: 1 } }, height: 52, gap: 2 }}>
+                <Avatar variant="square" src={track.cover_art_data_url || undefined} sx={{ width: 36, height: 36, borderRadius: '4px' }} />
+                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: 14 }} noWrap>{track.title}</Typography>
+                  <Typography sx={{ fontSize: 12, color: theme.palette.text.secondary }} noWrap>{track.album}</Typography>
+                </Box>
+                <IconButton className="more-btn" size="small" sx={{ opacity: 0, transition: 'opacity 200ms' }}>
+                  <MoreVertRoundedIcon sx={{ fontSize: 18 }} />
+                </IconButton>
+                <Typography sx={{ color: theme.palette.text.secondary, fontSize: 12 }}>{formatDuration(track.duration)}</Typography>
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+};
+
+interface ArtistRowProps {
+  artist: Artist;
+  onClick: () => void;
+}
+
+const ArtistRow = ({ artist, onClick }: ArtistRowProps) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const { imageUrl } = useArtistImage(artist.name);
 
   return (
     <Box
-      onClick={() => navigate(`/artists/${artist.id}`)}
+      onClick={onClick}
       sx={{
-        display: 'flex', 
-        flexDirection: 'column', 
+        display: 'flex',
         alignItems: 'center',
-        p: 2,
-        borderRadius: 4,
+        height: 60,
+        px: '16px',
         cursor: 'pointer',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        bgcolor: 'transparent',
+        transition: 'background-color 200ms',
         '&:hover': {
-          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
-          transform: 'translateY(-8px)',
-          '& .artist-image-container': {
-            boxShadow: (theme) => `0 12px 32px ${alpha(theme.palette.primary.main, 0.25)}`,
-          }
-        }
+          backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+        },
+        borderRadius: '4px',
+        gap: '16px',
       }}
     >
-      <Box
-        className="artist-image-container"
+      <Avatar
+        src={imageUrl || undefined}
         sx={{
-          width: '100%',
-          maxWidth: 160,
-          aspectRatio: '1 / 1',
-          borderRadius: '50%',
-          bgcolor: 'background.paper',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          mb: 2,
-          overflow: 'hidden',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-          transition: 'all 0.3s ease',
-          position: 'relative'
+          width: 44,
+          height: 44,
+          bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          color: theme.palette.text.secondary,
         }}
-      >
-        {imageUrl ? (
-          <Box
-            component="img"
-            src={imageUrl}
-            alt={artist.name}
-            sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              animation: 'fadeIn 0.5s ease'
-            }}
-          />
-        ) : (
-          <PersonIcon sx={{ fontSize: 80, color: 'text.secondary', opacity: 0.2 }} />
-        )}
-        
-        {loading && (
-          <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', bgcolor: 'rgba(0,0,0,0.2)' }}>
-            <CircularProgress size={24} color="inherit" />
-          </Box>
-        )}
+      />
+      <Box sx={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+        <Typography sx={{ fontWeight: 700, fontSize: 14 }}>
+          {artist.name}
+        </Typography>
+        <Typography sx={{ color: theme.palette.text.secondary, fontSize: 12 }}>
+          {artist.album_count || 0} Albums • {artist.track_count || 0} Tracks
+        </Typography>
       </Box>
-
-      <Typography variant="subtitle1" noWrap sx={{ width: '100%', fontWeight: 700, textAlign: 'center' }}>
-        {artist.name}
-      </Typography>
-      <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', mt: 0.5, fontWeight: 500, opacity: 0.7 }}>
-        {artist.album_count} albums • {artist.track_count} tracks
-      </Typography>
-      
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-      `}</style>
     </Box>
   );
 };
 
 interface ArtistsProps {
   artists: Artist[];
-  loading: boolean;
+  detailId?: number | null;
+  albums: Album[];
+  tracks: Track[];
+  onSelectArtist: (id: number) => void;
+  onBack: () => void;
+  onPlayTrack: (id: number) => void;
 }
 
-export const Artists = ({ artists, loading }: ArtistsProps) => {
+export const Artists = ({ artists, detailId, albums, tracks, onSelectArtist, onBack, onPlayTrack }: ArtistsProps) => {
+  const detailArtist = useMemo(() => detailId ? artists.find(a => a.id === detailId) : null, [detailId, artists]);
+
+  if (detailArtist) {
+    return (
+      <ArtistDetailsInternal 
+        artist={detailArtist} 
+        albums={albums} 
+        tracks={tracks} 
+        onBack={onBack} 
+        onPlayTrack={onPlayTrack} 
+      />
+    );
+  }
+
   return (
-    <>
-      <Typography variant="h3" sx={{ fontWeight: 900, mb: 4, letterSpacing: -1 }}>
-        Artists
-      </Typography>
-
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 8 }}>
-          <CircularProgress />
-        </Box>
-      ) : null}
-
-      {!loading && artists.length === 0 ? (
-        <Typography color="text.secondary" sx={{ mb: 3 }}>
-          No artists yet. Scan your music folder from the Tracks page first.
-        </Typography>
-      ) : null}
-
-      <Box
-        sx={{
-          display: 'grid',
-          gap: 2,
-          gridTemplateColumns: {
-            xs: 'repeat(2, minmax(0, 1fr))',
-            sm: 'repeat(3, minmax(0, 1fr))',
-            md: 'repeat(4, minmax(0, 1fr))',
-            lg: 'repeat(6, minmax(0, 1fr))',
-          },
-        }}
-      >
-        {artists.map((artist) => (
-          <ArtistCard key={artist.id} artist={artist} />
-        ))}
-      </Box>
-    </>
+    <Box sx={{ width: '100%', py: '8px', pb: 10 }}>
+      {artists.map((artist) => (
+        <ArtistRow 
+          key={artist.id} 
+          artist={artist} 
+          onClick={() => onSelectArtist(artist.id)} 
+        />
+      ))}
+    </Box>
   );
 };
