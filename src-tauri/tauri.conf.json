@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Athu Music D",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "identifier": "com.athu.music",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -30,7 +30,6 @@
       "appimage",
       "rpm"
     ],
-    "category": "AudioVideo",
     "shortDescription": "Premium Material You music player",
     "longDescription": "Athu Music D is a high-performance desktop music player built for speed and beauty, featuring dynamic Material You theming and smart metadata scraping.",
     "linux": {
