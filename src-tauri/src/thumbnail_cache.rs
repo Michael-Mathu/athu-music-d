@@ -3,7 +3,7 @@ use std::path::{Path, PathBuf};
 use sha2::{Sha256, Digest};
 
 #[tauri::command]
-pub fn get_cover_thumbnail(track_id: String, cover_path: String, app_dir: PathBuf) -> Result<String, String> {
+pub fn get_cover_thumbnail(_track_id: String, cover_path: String, app_dir: PathBuf) -> Result<String, String> {
     if cover_path.is_empty() {
         return Err("No cover path provided".to_string());
     }
