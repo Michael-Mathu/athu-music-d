@@ -234,7 +234,7 @@ fn try_embed_mp3_lyrics(
     */
 
     tag.save_to_path(path, WriteOptions::default())
-        .map_err(|e| e.to_string())?;
+        .map_err(|e: lofty::error::LoftyError| e.to_string())?;
     Ok(true)
 }
 
@@ -324,9 +324,9 @@ fn search_deezer_cover(client: &Client, album_title: &str, artist_name: &str) ->
         .get(url)
         .send()
         .and_then(|response| response.error_for_status())
-        .map_err(|e| e.to_string())?
+        .map_err(|e: reqwest::Error| e.to_string())?
         .json::<DeezerSearchResult>()
-        .map_err(|e| e.to_string())?;
+        .map_err(|e: reqwest::Error| e.to_string())?;
 
     let album = result
         .data

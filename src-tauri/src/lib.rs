@@ -2,21 +2,22 @@ mod database;
 mod scanner;
 mod audio;
 mod metadata;
+mod thumbnail_cache;
+mod mpris_smtc;
+mod apis;
 
-use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::{Manager, State, Emitter};
-use souvlaki::{MediaControlEvent, MediaControls, MediaMetadata, MediaPlayback, PlatformConfig};
+use tauri::{Manager, State};
+use crate::mpris_smtc::OSControlsState;
 
 pub struct AppState {
-    pub app_dir: PathBuf,
+    pub app_dir: std::path::PathBuf,
 }
 
-pub struct OSControlsState {
-    pub controls: Mutex<Option<MediaControls>>,
-}
+// Re-export commands from modules
+use crate::thumbnail_cache::get_cover_thumbnail;
+use crate::mpris_smtc::update_os_metadata;
 
-// Commands
 #[tauri::command]
 fn scan_local_files(dir: String, state: State<'_, database::DbState>) -> Result<String, String> {
     let mut conn = state.conn.lock().unwrap();
@@ -141,12 +142,63 @@ fn fetch_track_lyrics(
 }
 
 #[tauri::command]
-fn fetch_artist_bio(
-    artist_id: i64,
+async fn fetch_artist_info(
+    artist_name: String,
     state: State<'_, database::DbState>,
-) -> Result<database::ArtistBioPayload, String> {
+) -> Result<apis::ArtistMeta, String> {
     let conn = state.conn.lock().unwrap();
-    metadata::fetch_artist_bio(&conn, artist_id)
+    
+    // 1. Check Cache
+    if let Some(cached) = database::get_cached_artist_metadata(&conn, &artist_name).map_err(|e| e.to_string())? {
+        return Ok(cached);
+    }
+
+    let client = reqwest::Client::new();
+    let mut final_meta = apis::ArtistMeta {
+        image_url: None,
+        bio: None,
+        details: None,
+        source: "none".to_string(),
+    };
+
+    // 2. Waterfall
+    // Tier 1: Deezer (Best for imagery)
+    if let Ok(Some(deezer_meta)) = apis::deezer::search_artist(&client, &artist_name).await {
+        final_meta.image_url = deezer_meta.image_url;
+        final_meta.source = "deezer".to_string();
+    }
+
+    // Tier 2: TheAudioDB (Best for bio + details)
+    // Use test key "1" by default
+    if let Ok(Some(adb_meta)) = apis::theaudiodb::search_artist(&client, "1", &artist_name).await {
+        if final_meta.image_url.is_none() {
+            final_meta.image_url = adb_meta.image_url;
+        }
+        final_meta.bio = adb_meta.bio;
+        final_meta.details = adb_meta.details;
+        final_meta.source = if final_meta.source == "none" { "theaudiodb".to_string() } else { final_meta.source };
+    }
+
+    // Tier 3: Last.fm (Reliable fallback)
+    // Using a default fallback key for convenience if none provided
+    let lastfm_key = "4f8496155609607831d3e86f8a84620f"; 
+    if final_meta.bio.is_none() || final_meta.image_url.is_none() {
+        if let Ok(Some(lfm_meta)) = apis::lastfm::search_artist(&client, lastfm_key, &artist_name).await {
+            if final_meta.image_url.is_none() {
+                final_meta.image_url = lfm_meta.image_url;
+            }
+            if final_meta.bio.is_none() {
+                final_meta.bio = lfm_meta.bio;
+            }
+            final_meta.source = if final_meta.source == "none" { "lastfm".to_string() } else { final_meta.source };
+        }
+    }
+
+    if final_meta.source != "none" {
+        database::cache_artist_metadata(&conn, &artist_name, &final_meta).map_err(|e| e.to_string())?;
+    }
+
+    Ok(final_meta)
 }
 
 #[tauri::command]
@@ -160,36 +212,48 @@ fn fetch_album_art(
 }
 
 #[tauri::command]
-fn update_os_metadata(
-    title: String,
-    artist: String,
-    album: String,
-    duration_ms: u64,
-    is_playing: bool,
-    state: State<'_, OSControlsState>,
-) -> Result<(), String> {
-    let mut controls_guard = state.controls.lock().unwrap();
-    if let Some(controls) = controls_guard.as_mut() {
-        let _ = controls.set_metadata(MediaMetadata {
-            title: Some(&title),
-            artist: Some(&artist),
-            album: Some(&album),
-            duration: Some(std::time::Duration::from_millis(duration_ms)),
-            ..Default::default()
-        });
-        let _ = controls.set_playback(if is_playing {
-            MediaPlayback::Playing { progress: None }
-        } else {
-            MediaPlayback::Paused { progress: None }
-        });
+async fn fetch_lyrics(title: String, artist: String) -> Result<String, String> {
+    let url = format!(
+        "https://lrclib.net/api/get?track_name={}&artist_name={}",
+        urlencoding::encode(&title),
+        urlencoding::encode(&artist)
+    );
+
+    let client = reqwest::Client::new();
+    let res = client
+        .get(url)
+        .header("User-Agent", "AthuMusicD (https://github.com/Michael-Mathu/athu-music-d)")
+        .send()
+        .await
+        .map_err(|e| e.to_string())?;
+
+    if res.status().is_success() {
+        let json: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+        
+        if let Some(synced) = json.get("syncedLyrics").and_then(|v| v.as_str()) {
+            if !synced.is_empty() {
+                return Ok(synced.to_string());
+            }
+        }
+        
+        if let Some(plain) = json.get("plainLyrics").and_then(|v| v.as_str()) {
+            if !plain.is_empty() {
+                return Ok(plain.to_string());
+            }
+        }
+        
+        Err("No lyrics found for this track".to_string())
+    } else {
+        Err("No lyrics found for this track".to_string())
     }
-    Ok(())
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             let app_dir = app.path().app_data_dir().unwrap_or_else(|_| std::path::PathBuf::from("."));
             std::fs::create_dir_all(&app_dir).unwrap();
@@ -201,40 +265,11 @@ pub fn run() {
             app.manage(AppState {
                 app_dir: app_dir.clone(),
             });
-
+            
             let audio_tx = audio::init_audio_thread();
             app.manage(audio::AudioState { tx: audio_tx });
 
-            let mut hwnd = None;
-            #[cfg(target_os = "windows")]
-            {
-                if let Some(window) = app.get_webview_window("main") {
-                    if let Ok(h) = window.hwnd() {
-                        hwnd = Some(h.0 as *mut std::ffi::c_void);
-                    }
-                }
-            }
-
-            let config = PlatformConfig {
-                dbus_name: "athu_music_d",
-                display_name: "Athu Music D",
-                hwnd,
-            };
-
-            let app_handle = app.handle().clone();
-            let mut controls = MediaControls::new(config).ok();
-            if let Some(ref mut c) = controls {
-                let _ = c.attach(move |event: MediaControlEvent| {
-                    match event {
-                        MediaControlEvent::Play => { let _ = app_handle.emit("os-media-action", "play"); },
-                        MediaControlEvent::Pause => { let _ = app_handle.emit("os-media-action", "pause"); },
-                        MediaControlEvent::Next => { let _ = app_handle.emit("os-media-action", "next"); },
-                        MediaControlEvent::Previous => { let _ = app_handle.emit("os-media-action", "previous"); },
-                        _ => {}
-                    }
-                });
-            }
-
+            let controls = mpris_smtc::setup_controls(&app.handle());
             app.manage(OSControlsState {
                 controls: Mutex::new(controls),
             });
@@ -258,9 +293,11 @@ pub fn run() {
             get_playback_pos_ms,
             seek_playback_ms,
             fetch_track_lyrics,
-            fetch_artist_bio,
+            fetch_artist_info,
             fetch_album_art,
-            update_os_metadata
+            update_os_metadata,
+            fetch_lyrics,
+            get_cover_thumbnail
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

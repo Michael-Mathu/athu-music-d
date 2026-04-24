@@ -9,6 +9,7 @@ import { Albums } from './views/Albums';
 import { Artists } from './views/Artists';
 import { Playlists } from './views/Playlists';
 import { Settings } from './views/Settings';
+import { LyricsEditor } from './views/LyricsEditor';
 import { fetchAlbumArt, getPlaybackPosMs, listTracks, listAlbums, listArtists, listPlaylists, listPlaylistTracks, createPlaylist as apiCreatePlaylist, addTrackToPlaylist, removeTrackFromPlaylist, scanLocalFiles, pauseAudio, playAudio, resumeAudio, seekPlaybackMs, setVolume as setPlayerVolume, updateOsMetadata } from './lib/tauri';
 import { fetchSyncedLyrics } from './lib/metadata';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
@@ -38,6 +39,7 @@ function AppContent() {
     view: 'queue' as NavView,
     detail: null as string | number | null,
     scrollY: 0,
+    previousView: null as NavView | null,
   });
 
   const [tracks, setTracks] = useState<Track[]>([]);
@@ -345,11 +347,12 @@ function AppContent() {
   }, [handleTogglePlayback, handleSkip, isPlaying]);
 
   const handleNavChange = (view: NavView) => {
-    setNavState({
+    setNavState(prev => ({
       view,
       detail: null,
-      scrollY: 0
-    });
+      scrollY: 0,
+      previousView: prev.view
+    }));
     if (rightPanelRef.current) {
       rightPanelRef.current.scrollTop = 0;
     }
@@ -449,6 +452,16 @@ function AppContent() {
     if (navState.view === 'settings') {
       return <Settings />;
     }
+    if (navState.view === 'lyrics-editor') {
+      return (
+        <LyricsEditor 
+          currentTrack={currentTrack}
+          playbackPosMs={playbackPosMs}
+          onBack={() => setNavState(prev => ({ ...prev, view: prev.previousView ?? 'queue' }))}
+          onSeek={handleSeek}
+        />
+      );
+    }
     return null;
   };
 
@@ -508,7 +521,7 @@ function AppContent() {
           borderBottomRightRadius: `${vinyl?.radius?.window ?? 12}px`,
         }}
       >
-        <HeaderBar />
+        <HeaderBar onNavigate={(view) => setNavState(prev => ({ ...prev, previousView: prev.view, view }))} />
         <NavRail activeView={navState.view} onChange={handleNavChange} />
         <Box 
           ref={rightPanelRef}

@@ -20,3 +20,12 @@ export const fetchTrackLyrics = (trackId: number) => invoke<LyricsPayload>("fetc
 export const fetchArtistBio = (artistId: number) => invoke<ArtistBioPayload>("fetch_artist_bio", { artistId });
 export const fetchAlbumArt = (albumId: number) => invoke<AlbumArtPayload>("fetch_album_art", { albumId });
 export const updateOsMetadata = (title: string, artist: string, album: string, durationMs: number, isPlaying: boolean) => invoke<void>("update_os_metadata", { title, artist, album, durationMs, isPlaying });
+
+/**
+ * High-DPI Cover Art Caching
+ * @param trackId Unique track identifier
+ * @param coverPath Absolute path to the original cover image
+ * @returns Promise resolving to the local file path of the 300x300 thumbnail
+ */
+export const getCoverThumbnail = (trackId: string, coverPath: string) => 
+    invoke<string>("get_cover_thumbnail", { trackId, coverPath });

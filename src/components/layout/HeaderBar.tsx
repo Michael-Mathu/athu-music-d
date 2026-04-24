@@ -4,11 +4,13 @@ import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import ViewSidebarRoundedIcon from '@mui/icons-material/ViewSidebarRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import { Window } from '@tauri-apps/api/window';
+import { NavView } from '../../types/library';
 
 const appWindow = new Window('main');
 
-export const HeaderBar = () => {
+export const HeaderBar = ({ onNavigate }: { onNavigate: (view: NavView) => void }) => {
   const handleClose = async () => {
     try {
       await appWindow.close();
@@ -52,6 +54,15 @@ export const HeaderBar = () => {
       </Box>
 
       <Box sx={{ display: 'flex', gap: 0.5, pointerEvents: 'none' }}>
+        <Box sx={{ pointerEvents: 'auto' }}>
+          <IconButton 
+            size="small" 
+            onClick={() => onNavigate('lyrics-editor')}
+            sx={{ color: '#8E8E93', '& svg': { fontSize: 20 } }}
+          >
+            <EditNoteRoundedIcon />
+          </IconButton>
+        </Box>
         <Box sx={{ pointerEvents: 'auto' }}>
           <IconButton size="small" sx={{ '& svg': { fontSize: 20 } }}>
             <SearchRoundedIcon />

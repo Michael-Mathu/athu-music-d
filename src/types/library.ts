@@ -5,6 +5,7 @@ export interface Track {
   album: string;
   duration: number;
   file_path: string;
+  date_modified: number;
   album_id: number | null;
   artist_id: number | null;
   cover_art_data_url: string | null;
@@ -15,6 +16,7 @@ export interface Album {
   title: string;
   artist: string;
   track_count: number;
+  date_modified: number;
   year: number | null;
   artist_id: number | null;
   cover_art_data_url: string | null;
@@ -25,6 +27,7 @@ export interface Artist {
   name: string;
   track_count: number;
   album_count: number;
+  date_modified: number;
 }
 
 export interface LyricsLine {
@@ -74,4 +77,4 @@ export interface PlaylistTrack {
   duration: number;
 }
 
-export type NavView = 'queue' | 'tracks' | 'albums' | 'artists' | 'playlists' | 'settings';
+export type NavView = 'queue' | 'tracks' | 'albums' | 'artists' | 'playlists' | 'settings' | 'lyrics-editor';

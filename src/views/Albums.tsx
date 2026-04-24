@@ -4,6 +4,9 @@ import { Album, Track } from '../types/library';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import { useMemo } from 'react';
+import { useSort } from '../hooks/useSort';
+import { sortItems } from '../lib/utils/sorting';
+import { LibrarySort } from '../components/LibrarySort';
 
 const formatDuration = (duration: number) => {
   const minutes = Math.floor(duration / 60);
@@ -103,10 +106,13 @@ interface AlbumsProps {
 export const Albums = ({ albums, detailId, tracks, onSelectAlbum, onBack, onPlayTrack }: AlbumsProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const [sortOption, setSortOption] = useSort('athu_sort_albums');
 
   const detailAlbum = useMemo(() => 
     detailId ? albums.find(a => a.id === detailId) : null
   , [detailId, albums]);
+
+  const sortedAlbums = useMemo(() => sortItems(albums, sortOption), [albums, sortOption]);
 
   if (detailAlbum) {
     return (
@@ -120,47 +126,56 @@ export const Albums = ({ albums, detailId, tracks, onSelectAlbum, onBack, onPlay
   }
 
   return (
-    <Box 
-      sx={{ 
-        width: '100%', 
-        p: '20px',
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
-        gap: '16px',
-        pb: 10
-      }}
-    >
-      {albums.map((album) => (
-        <Box
-          key={album.id}
-          onClick={() => onSelectAlbum(album.id)}
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            cursor: 'pointer',
-            transition: 'transform 200ms ease',
-            '&:hover': {
-              transform: 'scale(1.03)',
-            }
-          }}
-        >
-          <Avatar
-            variant="square"
-            src={album.cover_art_data_url || "/src/assets/logo.png"}
+    <Box sx={{ width: '100%', pb: 10 }}>
+      {/* Header & Sort */}
+      <Box sx={{ px: 4, pt: 3, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 11 }}>
+          All Albums • {albums.length}
+        </Typography>
+        <LibrarySort value={sortOption} onChange={setSortOption} />
+      </Box>
+
+      <Box 
+        sx={{ 
+          width: '100%', 
+          p: '20px',
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+          gap: '16px',
+        }}
+      >
+        {sortedAlbums.map((album) => (
+          <Box
+            key={album.id}
+            onClick={() => onSelectAlbum(album.id)}
             sx={{
-              width: '100%',
-              height: 'auto',
-              aspectRatio: '1 / 1',
-              borderRadius: '10px',
-              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-              mb: 1.5,
-              '& img': { objectFit: album.cover_art_data_url ? 'cover' : 'contain', p: album.cover_art_data_url ? 0 : 2 }
+              display: 'flex',
+              flexDirection: 'column',
+              cursor: 'pointer',
+              transition: 'transform 200ms ease',
+              '&:hover': {
+                transform: 'scale(1.03)',
+              }
             }}
-          />
-          <Typography sx={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2, mb: 0.5 }} noWrap>{album.title}</Typography>
-          <Typography sx={{ fontWeight: 400, fontSize: 11, color: theme.palette.text.secondary }} noWrap>{album.artist}</Typography>
-        </Box>
-      ))}
+          >
+            <Avatar
+              variant="square"
+              src={album.cover_art_data_url || "/src/assets/logo.png"}
+              sx={{
+                width: '100%',
+                height: 'auto',
+                aspectRatio: '1 / 1',
+                borderRadius: '10px',
+                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                mb: 1.5,
+                '& img': { objectFit: album.cover_art_data_url ? 'cover' : 'contain', p: album.cover_art_data_url ? 0 : 2 }
+              }}
+            />
+            <Typography sx={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2, mb: 0.5 }} noWrap>{album.title}</Typography>
+            <Typography sx={{ fontWeight: 400, fontSize: 11, color: theme.palette.text.secondary }} noWrap>{album.artist}</Typography>
+          </Box>
+        ))}
+      </Box>
     </Box>
   );
 };

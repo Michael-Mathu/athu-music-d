@@ -39,13 +39,13 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
         contrastText: '#ffffff',
       },
       background: {
-        default: isDark ? '#242424' : '#ffffff',
-        paper: isDark ? '#2A2A2A' : '#f5f5f5',
+        default: isDark ? '#242424' : '#FAFAFA',
+        paper: isDark ? '#2A2A2A' : '#FFFFFF',
       },
       text: {
-        primary: isDark ? '#ffffff' : '#1c1c1e',
-        secondary: '#8E8E93',
-        disabled: '#8E8E93',
+        primary: isDark ? '#ffffff' : '#1A1A1A',
+        secondary: isDark ? '#8E8E93' : '#5A5A5A',
+        disabled: isDark ? '#8E8E93' : '#A0A0A0',
       },
       divider: isDark
         ? 'rgba(255,255,255,0.08)'
@@ -57,7 +57,7 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
     vinyl: {
       adwBlue: accent,
       panelLeft: isDark ? '#242424' : '#FFFFFF',
-      panelRight: isDark ? '#2A2A2A' : '#F5F5F5',
+      panelRight: isDark ? '#2A2A2A' : '#FAFAFA',
       trackActive: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
       radius: {
         art: 12,
@@ -66,7 +66,7 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
       }
     },
     typography: {
-      fontFamily: "'Roboto Serif', Georgia, serif",
+      fontFamily: "'SF Pro', 'Inter', 'Roboto Serif', serif",
       allVariants: {
         color: 'inherit',
       },
@@ -85,16 +85,18 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
             color: 'inherit',
           },
           secondary: {
-            color: '#8E8E93',
+            color: isDark ? '#8E8E93' : '#5A5A5A',
           },
         },
       },
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            color: isDark ? '#ffffff' : '#1c1c1e',
-            backgroundColor: isDark ? '#242424' : '#ffffff',
-            fontFamily: "'Roboto Serif', Georgia, serif",
+            color: isDark ? '#ffffff' : '#1A1A1A',
+            backgroundColor: isDark ? '#242424' : '#FAFAFA',
+            fontFamily: "'SF Pro', 'Inter', 'Roboto Serif', serif",
+            margin: 0,
+            overflow: 'hidden',
           },
         },
       },
@@ -109,8 +111,8 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
             width: 12,
             height: 12,
             backgroundColor: '#ffffff',
-            boxShadow: 'none',
-            '&:hover, &.Mui-focusVisible': { boxShadow: 'none' },
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+            '&:hover, &.Mui-focusVisible': { boxShadow: '0 0 0 8px rgba(53, 132, 228, 0.16)' },
           },
           track: { borderRadius: 2 },
           rail: { backgroundColor: isDark ? '#444444' : '#CCCCCC', opacity: 1 },
@@ -118,7 +120,10 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
       },
       MuiIconButton: {
         styleOverrides: {
-          root: { borderRadius: 6 },
+          root: { 
+            borderRadius: 6,
+            color: 'inherit',
+          },
         },
       },
       MuiMenu: {
@@ -127,7 +132,7 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
             background: isDark ? '#2A2A2A' : '#FFFFFF',
             borderRadius: 8,
             border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)',
-            boxShadow: 'none',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
           },
         },
       },
@@ -135,7 +140,7 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
         styleOverrides: {
           root: {
             fontSize: 13,
-            color: isDark ? '#ffffff' : '#1c1c1e',
+            color: isDark ? '#ffffff' : '#1A1A1A',
             '&:hover': { background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
           },
         },

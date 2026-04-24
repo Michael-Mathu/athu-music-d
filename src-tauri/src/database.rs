@@ -19,6 +19,7 @@ pub struct TrackRecord {
     pub album: String,
     pub duration: i64,
     pub file_path: String,
+    pub date_modified: i64,
     pub album_id: Option<i64>,
     pub artist_id: Option<i64>,
     pub cover_art_data_url: Option<String>,
@@ -30,6 +31,7 @@ pub struct AlbumRecord {
     pub title: String,
     pub artist: String,
     pub track_count: i64,
+    pub date_modified: i64,
     pub year: Option<i64>,
     pub artist_id: Option<i64>,
     pub cover_art_data_url: Option<String>,
@@ -41,6 +43,7 @@ pub struct ArtistRecord {
     pub name: String,
     pub track_count: i64,
     pub album_count: i64,
+    pub date_modified: i64,
 }
 
 #[allow(dead_code)]
@@ -139,6 +142,7 @@ pub fn init_db(app_dir: &std::path::Path) -> Result<Connection> {
             disc_number INTEGER,
             album_id INTEGER,
             artist_id INTEGER,
+            date_modified INTEGER DEFAULT 0,
             FOREIGN KEY(album_id) REFERENCES albums(id),
             FOREIGN KEY(artist_id) REFERENCES artists(id)
         );
@@ -178,6 +182,16 @@ pub fn init_db(app_dir: &std::path::Path) -> Result<Connection> {
             fetched_at DATETIME DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY(artist_id) REFERENCES artists(id)
         );
+
+        CREATE TABLE IF NOT EXISTS artist_metadata (
+            artist_name TEXT PRIMARY KEY,
+            image_url TEXT,
+            bio TEXT,
+            extra_data TEXT,
+            source TEXT,
+            fetched_at INTEGER
+        );
+
         CREATE INDEX IF NOT EXISTS idx_tracks_album_id ON tracks(album_id);
         CREATE INDEX IF NOT EXISTS idx_tracks_artist_id ON tracks(artist_id);
         CREATE INDEX IF NOT EXISTS idx_albums_artist_id ON albums(artist_id);
@@ -199,7 +213,8 @@ pub fn get_tracks(conn: &Connection) -> Result<Vec<TrackRecord>> {
             t.file_path,
             t.album_id,
             t.artist_id,
-            al.cover_image_path
+            al.cover_image_path,
+            t.date_modified
         FROM tracks t
         LEFT JOIN artists ar ON ar.id = t.artist_id
         LEFT JOIN albums al ON al.id = t.album_id
@@ -226,6 +241,7 @@ pub fn get_tracks(conn: &Connection) -> Result<Vec<TrackRecord>> {
                 .and_then(|path| data_url_from_path(Path::new(path)))
                 .or_else(|| extract_cover_art_data_url(Path::new(&file_path))),
             file_path,
+            date_modified: row.get(9)?,
         })
     })?;
 
@@ -337,7 +353,8 @@ pub fn get_albums(conn: &Connection) -> Result<Vec<AlbumRecord>> {
             al.year,
             MIN(t.file_path) AS sample_file_path,
             al.artist_id,
-            al.cover_image_path
+            al.cover_image_path,
+            MAX(t.date_modified) AS date_modified
         FROM albums al
         LEFT JOIN artists ar ON ar.id = al.artist_id
         LEFT JOIN tracks t ON t.album_id = al.id
@@ -364,6 +381,7 @@ pub fn get_albums(conn: &Connection) -> Result<Vec<AlbumRecord>> {
                 .or_else(|| sample_file_path
                 .as_deref()
                 .and_then(|path| extract_cover_art_data_url(Path::new(path)))),
+            date_modified: row.get(8).unwrap_or(0),
         })
     })?;
 
@@ -377,7 +395,8 @@ pub fn get_artists(conn: &Connection) -> Result<Vec<ArtistRecord>> {
             ar.id,
             ar.name,
             COUNT(t.id) AS track_count,
-            COUNT(DISTINCT al.id) AS album_count
+            COUNT(DISTINCT al.id) AS album_count,
+            MAX(t.date_modified) AS date_modified
         FROM artists ar
         LEFT JOIN tracks t ON t.artist_id = ar.id
         LEFT JOIN albums al ON al.artist_id = ar.id
@@ -392,6 +411,7 @@ pub fn get_artists(conn: &Connection) -> Result<Vec<ArtistRecord>> {
             name: row.get(1)?,
             track_count: row.get(2)?,
             album_count: row.get(3)?,
+            date_modified: row.get(4).unwrap_or(0),
         })
     })?;
 

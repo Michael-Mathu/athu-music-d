@@ -2,7 +2,10 @@ import { Box, Typography, Avatar, IconButton, InputBase, Button } from '@mui/mat
 import { useTheme } from '@mui/material/styles';
 import { Track } from '../types/library';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
+import { useSort } from '../hooks/useSort';
+import { sortItems } from '../lib/utils/sorting';
+import { LibrarySort } from '../components/LibrarySort';
 
 interface TracksProps {
   tracks: Track[];
@@ -17,11 +20,88 @@ const formatDuration = (duration: number) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }: TracksProps) => {
+const TrackRow = ({ track, isActive, onPlayTrack }: { track: Track, isActive: boolean, onPlayTrack: (id: number) => void }) => {
   const theme = useTheme();
   const vinyl = theme.vinyl;
   const isDark = theme.palette.mode === 'dark';
+
+  return (
+    <Box
+      onClick={() => onPlayTrack(track.id)}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        p: 1,
+        pr: 2,
+        borderRadius: `${vinyl.radius.row}px`,
+        cursor: 'pointer',
+        transition: 'background-color 200ms',
+        bgcolor: isActive ? vinyl.trackActive : 'transparent',
+        '&:hover': {
+          bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+          '& .more-btn': { opacity: 1 }
+        },
+        height: 52,
+        gap: 2,
+      }}
+    >
+      <Avatar
+        variant="square"
+        src={track.cover_art_data_url || "/src/assets/logo.png"}
+        sx={{
+          width: 36,
+          height: 36,
+          borderRadius: '4px',
+          bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+          '& img': { objectFit: track.cover_art_data_url ? 'cover' : 'contain', p: track.cover_art_data_url ? 0 : 0.5 }
+        }}
+      />
+      <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <Typography 
+          sx={{ 
+            fontWeight: 600, 
+            fontSize: 14,
+            color: isActive ? 'var(--adw-accent, #3584E4)' : 'text.primary',
+          }} 
+          noWrap
+        >
+          {track.title}
+        </Typography>
+        <Typography 
+          sx={{ 
+            fontWeight: 400, 
+            fontSize: 12,
+            color: 'text.secondary',
+          }} 
+          noWrap
+        >
+          {track.artist} • {track.album}
+        </Typography>
+      </Box>
+      
+      <IconButton 
+        className="more-btn"
+        size="small" 
+        onClick={(e) => e.stopPropagation()}
+        sx={{ opacity: 0, transition: 'opacity 200ms', color: 'text.secondary' }}
+      >
+        <MoreVertRoundedIcon sx={{ fontSize: 18 }} />
+      </IconButton>
+      
+      <Typography sx={{ color: 'text.secondary', fontSize: 12, minWidth: 40, textAlign: 'right' }}>
+        {formatDuration(track.duration)}
+      </Typography>
+    </Box>
+  );
+};
+
+export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }: TracksProps) => {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const [scanPath, setScanPath] = useState('');
+  const [sortOption, setSortOption] = useSort('athu_sort_tracks');
+
+  const sortedTracks = useMemo(() => sortItems(tracks, sortOption), [tracks, sortOption]);
 
   return (
     <Box sx={{ width: '100%', pb: 10 }}>
@@ -29,13 +109,14 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
       <Box sx={{ px: 3, pt: 3, pb: 2 }}>
         <Box 
           sx={{ 
-            bgcolor: '#2A2A2A', 
+            bgcolor: isDark ? '#2A2A2A' : '#FFFFFF', 
             borderRadius: '10px', 
             p: '16px',
-            border: '0.5px solid rgba(255,255,255,0.08)'
+            border: isDark ? '0.5px solid rgba(255,255,255,0.08)' : '0.5px solid rgba(0,0,0,0.1)',
+            boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.05)'
           }}
         >
-          <Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1.5 }}>
+          <Typography sx={{ fontWeight: 700, fontSize: 14, mb: 1.5 }}>
             Scan local music folder
           </Typography>
           <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-start' }}>
@@ -46,17 +127,18 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
                 onChange={(e) => setScanPath(e.target.value)}
                 sx={{
                   width: '100%',
-                  bgcolor: '#1E1E1E',
-                  color: '#FFFFFF',
+                  bgcolor: isDark ? '#1E1E1E' : '#FAFAFA',
+                  color: 'text.primary',
                   borderRadius: '8px',
                   px: 2,
                   py: 1,
                   fontSize: 14,
-                  border: '0.5px solid rgba(255,255,255,0.08)',
+                  border: '0.5px solid',
+                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)',
                 }}
               />
-              <Typography sx={{ color: theme.palette.text.secondary, fontSize: 12, mt: 1 }}>
-                Enter the absolute path to your music directory (e.g., C:\Users\Name\Music)
+              <Typography sx={{ color: 'text.secondary', fontSize: 12, mt: 1 }}>
+                Enter the absolute path to your music directory
               </Typography>
             </Box>
             <Button
@@ -64,8 +146,8 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
               onClick={() => void onScanLocalFiles(scanPath)}
               disableElevation
               sx={{
-                bgcolor: '#E9A44A',
-                color: '#1C1C1E',
+                bgcolor: 'primary.main',
+                color: '#FFFFFF',
                 borderRadius: '8px',
                 fontWeight: 700,
                 fontSize: 13,
@@ -73,9 +155,6 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
                 px: 3,
                 py: 1,
                 whiteSpace: 'nowrap',
-                '&:hover': {
-                  bgcolor: 'rgba(233,164,74,0.85)',
-                }
               }}
             >
               SCAN LIBRARY
@@ -84,88 +163,24 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
         </Box>
       </Box>
 
-      {/* Tracks Header */}
-      <Box sx={{ px: 4, pb: 1, pt: 2 }}>
-        <Typography variant="body2" sx={{ color: theme.palette.text.secondary, fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 12 }}>
+      {/* Tracks Header & Sort */}
+      <Box sx={{ px: 4, pb: 1, pt: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 11 }}>
           All Tracks • {tracks.length}
         </Typography>
+        <LibrarySort value={sortOption} onChange={setSortOption} />
       </Box>
 
       {/* Track List */}
       <Box sx={{ px: 2, display: 'flex', flexDirection: 'column' }}>
-        {tracks.map((track) => {
-          const isActive = track.id === currentTrackId;
-          
-          return (
-            <Box
-              key={track.id}
-              onClick={() => onPlayTrack(track.id)}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                p: 1,
-                pr: 2,
-                borderRadius: `${vinyl.radius.row}px`,
-                cursor: 'pointer',
-                transition: 'background-color 200ms',
-                bgcolor: isActive ? vinyl.trackActive : 'transparent',
-                '&:hover': {
-                  bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                  '& .more-btn': { opacity: 1 }
-                },
-                height: 52,
-                gap: 2,
-              }}
-            >
-              <Avatar
-                variant="square"
-                src={track.cover_art_data_url || "/src/assets/logo.png"}
-                sx={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: '4px',
-                  bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                  '& img': { objectFit: track.cover_art_data_url ? 'cover' : 'contain', p: track.cover_art_data_url ? 0 : 0.5 }
-                }}
-              />
-              <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <Typography 
-                  sx={{ 
-                    fontWeight: 600, 
-                    fontSize: 14,
-                    color: isActive ? 'var(--adw-accent, #3584E4)' : theme.palette.text.primary,
-                  }} 
-                  noWrap
-                >
-                  {track.title}
-                </Typography>
-                <Typography 
-                  sx={{ 
-                    fontWeight: 400, 
-                    fontSize: 12,
-                    color: theme.palette.text.secondary,
-                  }} 
-                  noWrap
-                >
-                  {track.artist} • {track.album}
-                </Typography>
-              </Box>
-              
-              <IconButton 
-                className="more-btn"
-                size="small" 
-                onClick={(e) => e.stopPropagation()}
-                sx={{ opacity: 0, transition: 'opacity 200ms', color: theme.palette.text.secondary }}
-              >
-                <MoreVertRoundedIcon sx={{ fontSize: 18 }} />
-              </IconButton>
-              
-              <Typography sx={{ color: theme.palette.text.secondary, fontSize: 12, minWidth: 40, textAlign: 'right' }}>
-                {formatDuration(track.duration)}
-              </Typography>
-            </Box>
-          );
-        })}
+        {sortedTracks.map((track) => (
+          <TrackRow 
+            key={track.id} 
+            track={track} 
+            isActive={track.id === currentTrackId} 
+            onPlayTrack={onPlayTrack} 
+          />
+        ))}
       </Box>
     </Box>
   );

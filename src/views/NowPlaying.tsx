@@ -134,9 +134,9 @@ export const NowPlaying = ({
 
           {/* Metadata */}
           <Box sx={{ textAlign: 'center', mb: 4, width: '100%' }}>
-            <Typography variant="body1" noWrap sx={{ mb: 1 }}>{currentTrack?.title || 'No track'}</Typography>
-            <Typography variant="subtitle1" noWrap sx={{ mb: 1 }}>{currentTrack?.artist || 'Unknown Artist'}</Typography>
-            <Typography variant="subtitle1" noWrap>{currentTrack?.album || 'Unknown Album'}</Typography>
+            <Typography variant="body1" noWrap sx={{ mb: 1, fontWeight: 600 }}>{currentTrack?.title || 'No track'}</Typography>
+            <Typography variant="subtitle1" noWrap sx={{ mb: 1, color: 'text.secondary' }}>{currentTrack?.artist || 'Unknown Artist'}</Typography>
+            <Typography variant="subtitle2" noWrap sx={{ color: 'text.secondary', opacity: 0.8 }}>{currentTrack?.album || 'Unknown Album'}</Typography>
           </Box>
 
           {/* Progress */}
@@ -161,8 +161,8 @@ export const NowPlaying = ({
               }}
             />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-              <Typography variant="caption">{formatDuration(clampedPos)}</Typography>
-              <Typography variant="caption">{formatDuration(durationMs)}</Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{formatDuration(clampedPos)}</Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{formatDuration(durationMs)}</Typography>
             </Box>
           </Box>
 
@@ -242,8 +242,8 @@ export const NowPlaying = ({
               }} 
             />
             <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-              <Typography variant="body2" noWrap>{currentTrack?.title}</Typography>
-              <Typography variant="subtitle1" sx={{ fontSize: 12 }} noWrap>{currentTrack?.artist}</Typography>
+              <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>{currentTrack?.title}</Typography>
+              <Typography variant="subtitle1" sx={{ fontSize: 12, color: 'text.secondary' }} noWrap>{currentTrack?.artist}</Typography>
             </Box>
             <IconButton size="small" onClick={onTogglePlayback}>
               {isPlaying ? <PauseRoundedIcon sx={{ fontSize: 20 }} /> : <PlayArrowRoundedIcon sx={{ fontSize: 20 }} />}
@@ -254,28 +254,36 @@ export const NowPlaying = ({
           </Box>
 
           {/* Lyrics Scroll */}
-          <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 2, pb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+          <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 3, pb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
             {lyrics && lyrics.lines.length > 0 ? (
               lyrics.lines.map((line, i) => (
                 <Typography 
                   key={line.timestamp_ms} 
                   ref={el => { lyricRefs.current.set(line.timestamp_ms, el); }}
+                  onClick={() => onSeek(line.timestamp_ms)}
                   sx={{ 
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: 600,
-                    lineHeight: 2.2,
+                    lineHeight: 1.8,
                     textAlign: 'center',
-                    color: activeLyricIndex === i ? vinyl.adwBlue : theme.palette.text.primary,
-                    opacity: activeLyricIndex === i ? 1 : 0.8,
-                    mt: line.text.trim() === '' ? '20px' : 0, // Spacer for empty lines
-                    transition: 'color 300ms',
+                    cursor: 'pointer',
+                    py: 1,
+                    width: '100%',
+                    borderRadius: 2,
+                    color: activeLyricIndex === i ? vinyl.adwBlue : 'text.primary',
+                    opacity: activeLyricIndex === i ? 1 : 0.6,
+                    transition: 'all 300ms',
+                    '&:hover': {
+                      opacity: 1,
+                      bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                    }
                   }}
                 >
-                  {line.text || ' '}
+                  {line.text || '...'}
                 </Typography>
               ))
             ) : (
-              <Typography sx={{ mt: 10, color: theme.palette.text.secondary }}>No lyrics found.</Typography>
+              <Typography sx={{ mt: 10, color: theme.palette.text.secondary, fontStyle: 'italic' }}>No lyrics found.</Typography>
             )}
           </Box>
         </Box>
@@ -283,5 +291,3 @@ export const NowPlaying = ({
     </Box>
   );
 };
-
-
