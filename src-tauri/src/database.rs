@@ -522,6 +522,46 @@ pub fn get_cached_artist_bio(conn: &Connection, artist_id: i64) -> Result<Option
     ).optional()
 }
 
+pub fn get_cached_artist_metadata(conn: &Connection, artist_name: &str) -> Result<Option<crate::apis::ArtistMeta>> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    let ttl = 7 * 24 * 60 * 60; // 7 days
+
+    conn.query_row(
+        "SELECT image_url, bio, extra_data, source FROM artist_metadata WHERE artist_name = ?1 AND fetched_at > ?2",
+        params![artist_name, now - ttl],
+        |row| {
+            let extra_data: Option<String> = row.get(2)?;
+            let details: Option<std::collections::HashMap<String, String>> = extra_data
+                .and_then(|s| serde_json::from_str(&s).ok());
+
+            Ok(crate::apis::ArtistMeta {
+                image_url: row.get(0)?,
+                bio: row.get(1)?,
+                details,
+                source: row.get(3)?,
+            })
+        },
+    ).optional()
+}
+
+pub fn cache_artist_metadata(conn: &Connection, artist_name: &str, meta: &crate::apis::ArtistMeta) -> Result<()> {
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs() as i64;
+    
+    let extra_data = meta.details.as_ref().and_then(|d| serde_json::to_string(d).ok());
+
+    conn.execute(
+        "INSERT OR REPLACE INTO artist_metadata (artist_name, image_url, bio, extra_data, source, fetched_at)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        params![artist_name, meta.image_url, meta.bio, extra_data, meta.source, now],
+    )?;
+    Ok(())
+}
 pub fn upsert_artist_bio(conn: &Connection, payload: &ArtistBioPayload) -> Result<()> {
     conn.execute(
         "
@@ -649,45 +689,4 @@ fn sniff_mime_type(bytes: &[u8]) -> &'static str {
     } else {
         "image/jpeg"
     }
-}
-
-pub fn get_cached_artist_metadata(conn: &Connection, artist_name: &str) -> Result<Option<crate::apis::ArtistMeta>> {
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
-    let ttl = 7 * 24 * 60 * 60; // 7 days
-
-    conn.query_row(
-        "SELECT image_url, bio, extra_data, source FROM artist_metadata WHERE artist_name = ?1 AND fetched_at > ?2",
-        params![artist_name, now - ttl],
-        |row| {
-            let extra_data: Option<String> = row.get(2)?;
-            let details: Option<std::collections::HashMap<String, String>> = extra_data
-                .and_then(|s| serde_json::from_str(&s).ok());
-
-            Ok(crate::apis::ArtistMeta {
-                image_url: row.get(0)?,
-                bio: row.get(1)?,
-                details,
-                source: row.get(3)?,
-            })
-        },
-    ).optional()
-}
-
-pub fn cache_artist_metadata(conn: &Connection, artist_name: &str, meta: &crate::apis::ArtistMeta) -> Result<()> {
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs() as i64;
-    
-    let extra_data = meta.details.as_ref().and_then(|d| serde_json::to_string(d).ok());
-
-    conn.execute(
-        "INSERT OR REPLACE INTO artist_metadata (artist_name, image_url, bio, extra_data, source, fetched_at)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-        params![artist_name, meta.image_url, meta.bio, extra_data, meta.source, now],
-    )?;
-    Ok(())
 }
