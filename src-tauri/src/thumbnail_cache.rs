@@ -1,6 +1,5 @@
 use std::fs;
 use std::path::{Path, PathBuf};
-use image::imageops::FilterType;
 use sha2::{Sha256, Digest};
 
 #[tauri::command]
@@ -17,7 +16,8 @@ pub fn get_cover_thumbnail(track_id: String, cover_path: String, app_dir: PathBu
     // Create a unique hash for the thumbnail filename
     let mut hasher = Sha256::new();
     hasher.update(cover_path.as_bytes());
-    let hash = format!("{:x}", hasher.finalize());
+    let result = hasher.finalize();
+    let hash = result.iter().map(|b| format!("{:02x}", b)).collect::<String>();
     let thumb_name = format!("{}.jpg", hash);
     let thumb_path = thumbnails_dir.join(thumb_name);
 
@@ -32,7 +32,7 @@ pub fn get_cover_thumbnail(track_id: String, cover_path: String, app_dir: PathBu
     }
 
     let img = image::open(img_path).map_err(|e| format!("Failed to open image: {}", e))?;
-    let thumbnail = img.fill(300, 300, FilterType::Lanczos3);
+    let thumbnail = img.thumbnail(300, 300);
     
     thumbnail.save_with_format(&thumb_path, image::ImageFormat::Jpeg)
         .map_err(|e| format!("Failed to save thumbnail: {}", e))?;

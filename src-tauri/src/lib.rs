@@ -146,11 +146,12 @@ async fn fetch_artist_info(
     artist_name: String,
     state: State<'_, database::DbState>,
 ) -> Result<apis::ArtistMeta, String> {
-    let conn = state.conn.lock().unwrap();
-    
-    // 1. Check Cache
-    if let Some(cached) = database::get_cached_artist_metadata(&conn, &artist_name).map_err(|e| e.to_string())? {
-        return Ok(cached);
+    // 1. Check Cache (using a scoped block to drop the lock before .await)
+    {
+        let conn = state.conn.lock().unwrap();
+        if let Some(cached) = database::get_cached_artist_metadata(&conn, &artist_name).map_err(|e| e.to_string())? {
+            return Ok(cached);
+        }
     }
 
     let client = reqwest::Client::new();
@@ -195,6 +196,7 @@ async fn fetch_artist_info(
     }
 
     if final_meta.source != "none" {
+        let conn = state.conn.lock().unwrap();
         database::cache_artist_metadata(&conn, &artist_name, &final_meta).map_err(|e| e.to_string())?;
     }
 

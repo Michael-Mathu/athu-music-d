@@ -36,7 +36,13 @@ pub fn setup_controls(app: &AppHandle) -> Option<MediaControls> {
                 MediaControlEvent::Toggle => { let _ = app_handle.emit("os-media-action", "toggle"); },
                 MediaControlEvent::Next => { let _ = app_handle.emit("os-media-action", "next"); },
                 MediaControlEvent::Previous => { let _ = app_handle.emit("os-media-action", "previous"); },
-                MediaControlEvent::Seek(pos) => { let _ = app_handle.emit("os-media-action", format!("seek:{}", pos.as_millis())); },
+                MediaControlEvent::Seek(direction) => {
+                    let offset = match direction {
+                        souvlaki::SeekDirection::Forward => 10000,
+                        souvlaki::SeekDirection::Backward => -10000,
+                    };
+                    let _ = app_handle.emit("os-media-action", format!("seek_offset:{}", offset));
+                },
                 _ => {}
             }
         });
