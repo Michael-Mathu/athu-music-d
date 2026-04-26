@@ -9,15 +9,24 @@ pub struct OSControlsState {
 }
 
 pub fn setup_controls(app: &AppHandle) -> Option<MediaControls> {
-    let mut hwnd = None;
+    let hwnd;
     #[cfg(target_os = "windows")]
     {
         if let Some(window) = app.get_webview_window("main") {
             if let Ok(h) = window.hwnd() {
                 hwnd = Some(h.0 as *mut std::ffi::c_void);
+            } else {
+                hwnd = None;
             }
+        } else {
+            hwnd = None;
         }
     }
+    #[cfg(not(target_os = "windows"))]
+    {
+        hwnd = None;
+    }
+
 
     let config = PlatformConfig {
         dbus_name: "athu_music_d",

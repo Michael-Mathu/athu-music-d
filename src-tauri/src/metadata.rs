@@ -1,9 +1,15 @@
 use crate::database;
-use lofty::config::WriteOptions;
+use lofty::file::TaggedFileExt;
 use lofty::id3::v2::{Frame, Id3v2Tag, UnsynchronizedTextFrame};
 use lofty::prelude::TagExt as _;
-use lofty::tag::{Accessor, ItemKey};
+use lofty::tag::{ItemKey, TagType};
+use lofty::config::WriteOptions;
+
+
 use lofty::TextEncoding;
+
+
+
 
 use reqwest::blocking::Client;
 use rusqlite::{params, Connection};
@@ -256,26 +262,29 @@ fn try_embed_mp3_lyrics(
 
     tag.save_to_path(path, WriteOptions::default())
         .map_err(|e: lofty::error::LoftyError| e.to_string())?;
+
     Ok(true)
 }
 
 pub fn read_embedded_lyrics(file_path: &str) -> Option<String> {
     let path = Path::new(file_path);
-    let tagged_file = Probe::open(path).ok()?.read().ok()?;
+    let tagged_file = lofty::read_from_path(path).ok()?;
     let tag = tagged_file.primary_tag().or_else(|| tagged_file.first_tag())?;
 
-    // Try ID3v2 USLT / Generic Lyrics
-    if let Some(lyrics) = tag.get_string(&ItemKey::Lyrics) {
-        return Some(lyrics.to_string());
+
+    // Try standard lyrics key or custom Vorbis LYRICS
+    let key = ItemKey::from_key(TagType::VorbisComments, "LYRICS")
+        .unwrap_or(ItemKey::Lyrics);
+    if let Some(lyrics) = tag.get_string(key) {
+        return Some(lyrics.to_owned());
     }
 
-    // Try Vorbis Comment "LYRICS"
-    if let Some(lyrics) = tag.get_string(&ItemKey::Unknown("LYRICS".to_string())) {
-        return Some(lyrics.to_string());
-    }
+
 
     None
 }
+
+
 
 
 fn search_lrclib(track: &database::TrackMetadata) -> Result<LrclibResult, String> {

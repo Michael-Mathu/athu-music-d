@@ -1,11 +1,14 @@
 use crate::database::{self, DbState};
-use lofty::file::TaggedFileExt;
-use lofty::tag::{Accessor, TagExt, ItemKey};
-use lofty::probe::Probe;
+use lofty::file::{TaggedFileExt, FileType};
+use lofty::prelude::TagExt as _;
+use lofty::tag::{ItemKey, TagType};
+use lofty::config::WriteOptions;
+
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::Path;
 use tauri::State;
+
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct LyricsResult {
@@ -106,30 +109,32 @@ fn save_lrc_sidecar(file_path: &str, content: &str) -> Option<String> {
 
 fn embed_lyrics_metadata(file_path: &str, content: &str) -> Result<(), String> {
     let path = Path::new(file_path);
-    let mut tagged_file = Probe::open(path)
-        .map_err(|e| e.to_string())?
-        .read()
+    let mut tagged_file = lofty::read_from_path(path)
         .map_err(|e| e.to_string())?;
 
     let file_type = tagged_file.file_type();
-    let tag = tagged_file.primary_tag_mut()
-        .or_else(|| tagged_file.first_tag_mut())
-        .ok_or("No tags found in file to embed lyrics")?;
+    
+    let tag = match tagged_file.primary_tag_mut() {
+        Some(t) => t,
+        None => tagged_file.first_tag_mut().ok_or("No tags found in file to embed lyrics")?,
+    };
 
     match file_type {
-        lofty::file::FileType::MPEG => {
-            // ID3v2 USLT
+        FileType::Mpeg => {
             tag.insert_text(ItemKey::Lyrics, content.to_string());
         },
-        lofty::file::FileType::FLAC => {
-            // Vorbis Comment LYRICS
-            tag.insert_text(ItemKey::Unknown("LYRICS".to_string()), content.to_string());
+        FileType::Flac => {
+            let key = ItemKey::from_key(TagType::VorbisComments, "LYRICS")
+                .unwrap_or(ItemKey::Lyrics);
+            tag.insert_text(key, content.to_string());
         },
         _ => return Err("Unsupported file format for embedding".to_string()),
     }
 
-    tag.save_to_path(path)
+    tag.save_to_path(path, WriteOptions::default())
         .map_err(|e| format!("Failed to save embedded lyrics: {}", e))?;
+
+
 
     Ok(())
 }
