@@ -131,7 +131,8 @@ function AppContent() {
 
     let cancelled = false;
 
-    const loadTrackMetadata = async () => {
+    const loadTrackLyrics = async () => {
+
       try {
         const nextLyrics = await fetchSyncedLyrics(
           currentTrack.artist,
@@ -149,12 +150,29 @@ function AppContent() {
       }
     };
 
-    void loadTrackMetadata();
+    void loadTrackLyrics();
+
 
     return () => {
       cancelled = true;
     };
   }, [currentTrack]);
+
+  const refreshLyrics = useCallback(async () => {
+    if (!currentTrack) return;
+    try {
+      const nextLyrics = await fetchSyncedLyrics(
+        currentTrack.artist,
+        currentTrack.title,
+        currentTrack.duration,
+        currentTrack.id
+      );
+      setLyrics(nextLyrics);
+    } catch (err) {
+      setLyrics(null);
+    }
+  }, [currentTrack]);
+
 
   useEffect(() => {
     if (!currentTrack) return;
@@ -507,7 +525,9 @@ function AppContent() {
           onVolumeChange={setVolume}
           onToggleShuffle={() => setShuffleEnabled(!shuffleEnabled)}
           onCycleRepeatMode={() => setRepeatMode(prev => prev === 'off' ? 'all' : prev === 'all' ? 'one' : 'off')}
+          onRefreshLyrics={refreshLyrics}
         />
+
       </Box>
 
       {/* Right Panel: Queue */}

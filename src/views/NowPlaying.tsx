@@ -11,6 +11,9 @@ import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
 import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded';
 import RepeatOneRoundedIcon from '@mui/icons-material/RepeatOneRounded';
+import CloudDownloadRoundedIcon from '@mui/icons-material/CloudDownloadRounded';
+import { downloadAndEmbedLyrics } from '../lib/tauri';
+
 
 interface NowPlayingProps {
   currentTrack: Track | null;
@@ -27,7 +30,9 @@ interface NowPlayingProps {
   onVolumeChange: (value: number) => void;
   onToggleShuffle: () => void;
   onCycleRepeatMode: () => void;
+  onRefreshLyrics?: () => Promise<void>;
 }
+
 
 const formatDuration = (durationMs: number) => {
   const seconds = Math.floor(durationMs / 1000);
@@ -51,7 +56,9 @@ export const NowPlaying = ({
   onVolumeChange,
   onToggleShuffle,
   onCycleRepeatMode,
+  onRefreshLyrics,
 }: NowPlayingProps) => {
+
   const theme = useTheme();
   const vinyl = theme.vinyl;
   const isDark = theme.palette.mode === 'dark';
@@ -251,7 +258,31 @@ export const NowPlaying = ({
             <IconButton size="small" onClick={onNext}>
               <SkipNextRoundedIcon sx={{ fontSize: 20 }} />
             </IconButton>
+            <IconButton 
+              size="small" 
+              onClick={async () => {
+                if (currentTrack) {
+                  try {
+                    await downloadAndEmbedLyrics(
+                      currentTrack.id,
+                      currentTrack.artist,
+                      currentTrack.title,
+                      currentTrack.album,
+                      currentTrack.duration,
+                      currentTrack.file_path
+                    );
+                    if (onRefreshLyrics) await onRefreshLyrics();
+                  } catch (err) {
+                    console.error("Failed to download lyrics:", err);
+                  }
+                }
+              }}
+              sx={{ color: vinyl.adwBlue }}
+            >
+              <CloudDownloadRoundedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
           </Box>
+
 
           {/* Lyrics Scroll */}
           <Box sx={{ flexGrow: 1, overflowY: 'auto', px: 3, pb: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

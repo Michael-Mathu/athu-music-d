@@ -31,6 +31,15 @@ export const fetchArtistBio = (artistId: number) => invoke<ArtistBioPayload>("fe
 export const fetchAlbumArt = (albumId: number) => invoke<AlbumArtPayload>("fetch_album_art", { albumId });
 export const updateOsMetadata = (title: string, artist: string, album: string, durationMs: number, isPlaying: boolean) => invoke<void>("update_os_metadata", { title, artist, album, durationMs, isPlaying });
 
+export const downloadAndEmbedLyrics = (
+    trackId: number,
+    artist: String,
+    title: String,
+    album?: string,
+    duration?: number,
+    filePath: string
+) => invoke<any>("download_and_embed_lyrics", { trackId, artist, title, album, duration, filePath });
+
 /**
  * High-DPI Cover Art Caching
  * @param trackId Unique track identifier

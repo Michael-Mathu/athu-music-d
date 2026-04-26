@@ -1,5 +1,8 @@
-import { Box, Typography, Avatar, IconButton, InputBase, Button, InputAdornment } from '@mui/material';
+import { Box, Typography, Avatar, IconButton, InputBase, Button, InputAdornment, Menu, MenuItem } from '@mui/material';
 import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded';
+import CloudDownloadRoundedIcon from '@mui/icons-material/CloudDownloadRounded';
+import { downloadAndEmbedLyrics } from '../lib/tauri';
+
 
 import { useTheme } from '@mui/material/styles';
 import { Track } from '../types/library';
@@ -28,8 +31,36 @@ const TrackRow = ({ track, isActive, onPlayTrack }: { track: Track, isActive: bo
   const theme = useTheme();
   const vinyl = theme.vinyl;
   const isDark = theme.palette.mode === 'dark';
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    event.stopPropagation();
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleDownloadLyrics = async () => {
+    handleMenuClose();
+    try {
+      await downloadAndEmbedLyrics(
+        track.id,
+        track.artist,
+        track.title,
+        track.album,
+        track.duration,
+        track.file_path
+      );
+      // Optional: show a toast or notification
+    } catch (err) {
+      console.error("Failed to download lyrics:", err);
+    }
+  };
 
   return (
+
     <Box
       onClick={() => onPlayTrack(track.id)}
       sx={{
@@ -86,11 +117,25 @@ const TrackRow = ({ track, isActive, onPlayTrack }: { track: Track, isActive: bo
       <IconButton 
         className="more-btn"
         size="small" 
-        onClick={(e) => e.stopPropagation()}
+        onClick={handleMenuOpen}
         sx={{ opacity: 0, transition: 'opacity 200ms', color: 'text.secondary' }}
       >
         <MoreVertRoundedIcon sx={{ fontSize: 18 }} />
       </IconButton>
+
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+      >
+        <MenuItem onClick={handleDownloadLyrics}>
+          <CloudDownloadRoundedIcon sx={{ mr: 1.5, fontSize: 18, color: 'primary.main' }} />
+          Download Synced Lyrics
+        </MenuItem>
+      </Menu>
+
       
       <Typography sx={{ color: 'text.secondary', fontSize: 12, minWidth: 40, textAlign: 'right' }}>
         {formatDuration(track.duration)}

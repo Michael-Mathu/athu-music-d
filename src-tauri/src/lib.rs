@@ -5,6 +5,7 @@ mod metadata;
 mod thumbnail_cache;
 mod mpris_smtc;
 mod apis;
+mod lyrics;
 
 use std::sync::Mutex;
 use tauri::{Manager, State};
@@ -17,6 +18,7 @@ pub struct AppState {
 // Re-export commands from modules
 use crate::thumbnail_cache::get_cover_thumbnail;
 use crate::mpris_smtc::update_os_metadata;
+use crate::lyrics::download_and_embed_lyrics;
 
 #[tauri::command]
 fn scan_local_files(dir: String, state: State<'_, database::DbState>) -> Result<String, String> {
@@ -281,6 +283,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             scan_local_files,
+            download_and_embed_lyrics,
             list_tracks,
             list_albums,
             list_artists,

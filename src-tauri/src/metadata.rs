@@ -2,7 +2,9 @@ use crate::database;
 use lofty::config::WriteOptions;
 use lofty::id3::v2::{Frame, Id3v2Tag, UnsynchronizedTextFrame};
 use lofty::prelude::TagExt as _;
+use lofty::tag::{Accessor, ItemKey};
 use lofty::TextEncoding;
+
 use reqwest::blocking::Client;
 use rusqlite::{params, Connection};
 use serde::Deserialize;
@@ -20,7 +22,26 @@ pub fn fetch_track_lyrics(
     }
 
     let track = database::get_track_metadata(conn, track_id).map_err(|e| e.to_string())?;
+
+    // Try reading embedded lyrics first
+    if let Some(embedded_text) = read_embedded_lyrics(&track.file_path) {
+        let lines = database::parse_lrc_lines(&embedded_text);
+        let payload = database::LyricsPayload {
+            track_id,
+            provider: "embedded".to_string(),
+            raw_lrc: embedded_text.clone(),
+            plain_text: if lines.is_empty() { embedded_text.clone() } else { lines.iter().map(|l| l.text.clone()).collect::<Vec<_>>().join("\n") },
+            synced: !lines.is_empty(),
+            embedded: true,
+            stored_path: None,
+            lines,
+        };
+        let _ = database::upsert_lyrics_cache(conn, &payload);
+        return Ok(payload);
+    }
+
     let response = search_lrclib(&track)?;
+
     let raw_lrc = response
         .synced_lyrics
         .or(response.plain_lyrics.clone())
@@ -237,6 +258,25 @@ fn try_embed_mp3_lyrics(
         .map_err(|e: lofty::error::LoftyError| e.to_string())?;
     Ok(true)
 }
+
+pub fn read_embedded_lyrics(file_path: &str) -> Option<String> {
+    let path = Path::new(file_path);
+    let tagged_file = Probe::open(path).ok()?.read().ok()?;
+    let tag = tagged_file.primary_tag().or_else(|| tagged_file.first_tag())?;
+
+    // Try ID3v2 USLT / Generic Lyrics
+    if let Some(lyrics) = tag.get_string(&ItemKey::Lyrics) {
+        return Some(lyrics.to_string());
+    }
+
+    // Try Vorbis Comment "LYRICS"
+    if let Some(lyrics) = tag.get_string(&ItemKey::Unknown("LYRICS".to_string())) {
+        return Some(lyrics.to_string());
+    }
+
+    None
+}
+
 
 fn search_lrclib(track: &database::TrackMetadata) -> Result<LrclibResult, String> {
     let client = http_client()?;
