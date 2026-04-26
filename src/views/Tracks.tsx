@@ -49,10 +49,11 @@ const TrackRow = ({ track, isActive, onPlayTrack }: { track: Track, isActive: bo
         track.id,
         track.artist,
         track.title,
+        track.file_path,
         track.album,
-        track.duration,
-        track.file_path
+        track.duration
       );
+
       // Optional: show a toast or notification
     } catch (err) {
       console.error("Failed to download lyrics:", err);

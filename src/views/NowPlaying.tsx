@@ -267,10 +267,11 @@ export const NowPlaying = ({
                       currentTrack.id,
                       currentTrack.artist,
                       currentTrack.title,
+                      currentTrack.file_path,
                       currentTrack.album,
-                      currentTrack.duration,
-                      currentTrack.file_path
+                      currentTrack.duration
                     );
+
                     if (onRefreshLyrics) await onRefreshLyrics();
                   } catch (err) {
                     console.error("Failed to download lyrics:", err);

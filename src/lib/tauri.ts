@@ -33,12 +33,13 @@ export const updateOsMetadata = (title: string, artist: string, album: string, d
 
 export const downloadAndEmbedLyrics = (
     trackId: number,
-    artist: String,
-    title: String,
+    artist: string,
+    title: string,
+    filePath: string,
     album?: string,
-    duration?: number,
-    filePath: string
+    duration?: number
 ) => invoke<any>("download_and_embed_lyrics", { trackId, artist, title, album, duration, filePath });
+
 
 /**
  * High-DPI Cover Art Caching
