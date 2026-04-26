@@ -198,6 +198,17 @@ pub fn init_db(app_dir: &std::path::Path) -> Result<Connection> {
         "
     )?;
 
+    // Migration: Add date_modified column to tracks if it doesn't exist
+    let has_date_modified: i64 = conn.query_row(
+        "SELECT count(*) FROM pragma_table_info('tracks') WHERE name='date_modified'",
+        [],
+        |row| row.get(0),
+    ).unwrap_or(0);
+
+    if has_date_modified == 0 {
+        conn.execute("ALTER TABLE tracks ADD COLUMN date_modified INTEGER DEFAULT 0", [])?;
+    }
+
     Ok(conn)
 }
 

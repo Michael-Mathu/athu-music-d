@@ -1,4 +1,6 @@
-import { Box, Typography, Avatar, IconButton, InputBase, Button } from '@mui/material';
+import { Box, Typography, Avatar, IconButton, InputBase, Button, InputAdornment } from '@mui/material';
+import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded';
+
 import { useTheme } from '@mui/material/styles';
 import { Track } from '../types/library';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
@@ -6,6 +8,8 @@ import { useState, useMemo } from 'react';
 import { useSort } from '../hooks/useSort';
 import { sortItems } from '../lib/utils/sorting';
 import { LibrarySort } from '../components/LibrarySort';
+import { openDirectory } from '../lib/tauri';
+
 
 interface TracksProps {
   tracks: Track[];
@@ -101,6 +105,14 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
   const [scanPath, setScanPath] = useState('');
   const [sortOption, setSortOption] = useSort('athu_sort_tracks');
 
+  const handleBrowse = async () => {
+    const path = await openDirectory();
+    if (path) {
+      setScanPath(path);
+    }
+  };
+
+
   const sortedTracks = useMemo(() => sortItems(tracks, sortOption), [tracks, sortOption]);
 
   return (
@@ -136,7 +148,20 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
                   border: '0.5px solid',
                   borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)',
                 }}
+                endAdornment={
+                  <InputAdornment position="end">
+                    <IconButton 
+                      onClick={handleBrowse} 
+                      edge="end"
+                      size="small"
+                      sx={{ color: 'primary.main' }}
+                    >
+                      <FolderOpenRoundedIcon sx={{ fontSize: 20 }} />
+                    </IconButton>
+                  </InputAdornment>
+                }
               />
+
               <Typography sx={{ color: 'text.secondary', fontSize: 12, mt: 1 }}>
                 Enter the absolute path to your music directory
               </Typography>

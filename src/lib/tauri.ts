@@ -1,5 +1,15 @@
 import { invoke } from "@tauri-apps/api/core";
+import { open } from '@tauri-apps/plugin-dialog';
 import type { Album, AlbumArtPayload, Artist, ArtistBioPayload, LyricsPayload, Playlist, PlaylistTrack, Track } from "../types/library";
+
+export const openDirectory = async (): Promise<string | null> => {
+  const selected = await open({
+    directory: true,
+    multiple: false,
+    title: 'Select Music Folder'
+  });
+  return selected as string | null;
+};
 
 export const listTracks = () => invoke<Track[]>("list_tracks");
 export const listAlbums = () => invoke<Album[]>("list_albums");
