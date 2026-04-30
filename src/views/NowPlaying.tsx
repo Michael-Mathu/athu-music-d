@@ -1,4 +1,4 @@
-import { Box, IconButton, Typography, Avatar, Slider } from '@mui/material';
+import { Box, IconButton, Typography, Slider } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useState, useRef, useEffect } from 'react';
 import type { LyricsPayload, Track } from '../types/library';

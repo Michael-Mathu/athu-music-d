@@ -1,4 +1,4 @@
-import { Box, Typography, Avatar, IconButton, InputBase, Button, InputAdornment, Menu, MenuItem } from '@mui/material';
+import { Box, Typography, IconButton, InputBase, Button, InputAdornment, Menu, MenuItem } from '@mui/material';
 import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded';
 import CloudDownloadRoundedIcon from '@mui/icons-material/CloudDownloadRounded';
 import { downloadAndEmbedLyrics } from '../lib/tauri';
@@ -246,7 +246,7 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
         <Virtuoso
           style={{ height: '100%' }}
           data={sortedTracks}
-          itemContent={(index, track) => (
+          itemContent={(_index, track) => (
             <TrackRow 
               track={track} 
               isActive={track.id === currentTrackId} 
