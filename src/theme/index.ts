@@ -98,6 +98,25 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
             margin: 0,
             overflow: 'hidden',
           },
+          /* Global Scrollbar Styling */
+          '::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '::-webkit-scrollbar-track': {
+            background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+          },
+          '::-webkit-scrollbar-thumb': {
+            background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+            borderRadius: '10px',
+            '&:hover': {
+              background: accent, // Use accent color on hover for better visibility
+            },
+          },
+          '*': {
+            scrollbarWidth: 'thin',
+            scrollbarColor: `${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} transparent`,
+          },
         },
       },
       MuiSlider: {

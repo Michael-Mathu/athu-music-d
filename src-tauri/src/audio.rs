@@ -45,7 +45,7 @@ pub fn init_audio_thread() -> mpsc::Sender<AudioCommand> {
                     let _ = reply.send(player.get_pos().as_millis() as u64);
                 }
                 AudioCommand::Seek(pos_ms) => {
-                    let _ = player.try_seek(Duration::from_millis(pos_ms));
+                    let _ = player.seek(Duration::from_millis(pos_ms));
                 }
             }
         }

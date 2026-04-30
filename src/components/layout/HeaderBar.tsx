@@ -1,7 +1,5 @@
 import { Box, IconButton } from '@mui/material';
 
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import ViewSidebarRoundedIcon from '@mui/icons-material/ViewSidebarRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
@@ -33,16 +31,7 @@ export const HeaderBar = ({ onNavigate }: { onNavigate: (view: NavView) => void 
       }}
     >
       <Box sx={{ display: 'flex', gap: 0.5, pointerEvents: 'none' }}>
-        <Box sx={{ pointerEvents: 'auto' }}>
-          <IconButton size="small" sx={{ '& svg': { fontSize: 20 } }}>
-            <ViewSidebarRoundedIcon />
-          </IconButton>
-        </Box>
-        <Box sx={{ pointerEvents: 'auto' }}>
-          <IconButton size="small" sx={{ '& svg': { fontSize: 20 } }}>
-            <MenuRoundedIcon />
-          </IconButton>
-        </Box>
+        {/* Sidebar and Menu icons removed */}
       </Box>
 
       <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', pointerEvents: 'none' }}>
