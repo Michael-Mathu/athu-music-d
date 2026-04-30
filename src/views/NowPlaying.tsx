@@ -13,6 +13,7 @@ import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded';
 import RepeatOneRoundedIcon from '@mui/icons-material/RepeatOneRounded';
 import CloudDownloadRoundedIcon from '@mui/icons-material/CloudDownloadRounded';
 import { downloadAndEmbedLyrics } from '../lib/tauri';
+import { CoverArtImage } from '../components/CoverArtImage';
 
 
 interface NowPlayingProps {
@@ -87,6 +88,19 @@ export const NowPlaying = ({
   const durationMs = currentTrack ? currentTrack.duration * 1000 : 0;
   const clampedPos = Math.max(0, Math.min(playbackPosMs, durationMs || playbackPosMs));
 
+  const [isSeeking, setIsSeeking] = useState(false);
+  const [localSeekPos, setLocalSeekPos] = useState(0);
+
+  const handleSliderChange = (_: Event, value: number | number[]) => {
+    setIsSeeking(true);
+    setLocalSeekPos(value as number);
+  };
+
+  const handleSliderChangeCommitted = (_: React.SyntheticEvent | Event, value: number | number[]) => {
+    onSeek(value as number);
+    setIsSeeking(false);
+  };
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', pt: 3 }}>
       {/* Tab Toggle */}
@@ -127,16 +141,10 @@ export const NowPlaying = ({
       {activeTab === 'player' ? (
         <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', px: 2 }}>
           {/* Album Art */}
-          <Avatar
-            variant="square"
-            src={currentTrack?.cover_art_data_url || "/src/assets/logo.png"}
-            sx={{ 
-              width: 220, height: 220, 
-              borderRadius: `${vinyl?.radius?.art ?? 12}px`,
-              mt: 2, mb: 4,
-              bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-              '& img': { objectFit: currentTrack?.cover_art_data_url ? 'cover' : 'contain', p: currentTrack?.cover_art_data_url ? 0 : 4 }
-            }}
+          <CoverArtImage
+            src={currentTrack?.cover_art_data_url}
+            size={220}
+            borderRadius={`${vinyl?.radius?.art ?? 12}px`}
           />
 
           {/* Metadata */}
@@ -150,10 +158,13 @@ export const NowPlaying = ({
           <Box sx={{ width: '100%', mb: 4 }}>
             <Slider
               size="small"
-              value={durationMs ? clampedPos : 0}
+              value={isSeeking ? localSeekPos : (durationMs ? clampedPos : 0)}
               min={0}
               max={durationMs || 0}
-              onChangeCommitted={(_, value) => onSeek(value as number)}
+              onChange={handleSliderChange}
+              onChangeCommitted={handleSliderChangeCommitted}
+              valueLabelDisplay="auto"
+              valueLabelFormat={(val) => formatDuration(val)}
               sx={{
                 color: vinyl.adwBlue,
                 height: 4,
@@ -168,7 +179,7 @@ export const NowPlaying = ({
               }}
             />
             <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5 }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{formatDuration(clampedPos)}</Typography>
+              <Typography variant="caption" sx={{ color: 'text.secondary' }}>{formatDuration(isSeeking ? localSeekPos : clampedPos)}</Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }}>{formatDuration(durationMs)}</Typography>
             </Box>
           </Box>
@@ -240,13 +251,11 @@ export const NowPlaying = ({
         <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
           {/* Mini Player */}
           <Box sx={{ display: 'flex', alignItems: 'center', px: 2, mb: 2, gap: 1 }}>
-            <Avatar 
-              variant="square" 
-              src={currentTrack?.cover_art_data_url || "/src/assets/logo.png"} 
-              sx={{ 
-                width: 40, height: 40, borderRadius: '6px',
-                '& img': { objectFit: currentTrack?.cover_art_data_url ? 'cover' : 'contain', p: currentTrack?.cover_art_data_url ? 0 : 0.5 }
-              }} 
+            <CoverArtImage
+              src={currentTrack?.cover_art_data_url}
+              size={40}
+              borderRadius="6px"
+              padding={0.5}
             />
             <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
               <Typography variant="body2" noWrap sx={{ fontWeight: 600 }}>{currentTrack?.title}</Typography>

@@ -21,10 +21,15 @@ use crate::mpris_smtc::update_os_metadata;
 use crate::lyrics::download_and_embed_lyrics;
 
 #[tauri::command]
-fn scan_local_files(dir: String, state: State<'_, database::DbState>) -> Result<String, String> {
-    let mut conn = state.conn.lock().unwrap();
-    scanner::scan_directory(&dir, &mut conn).map_err(|e| e.to_string())?;
-    Ok("Scanning complete".to_string())
+pub async fn scan_local_files(dir: String, state: State<'_, database::DbState>) -> Result<String, String> {
+    let db_state = state.inner().clone();
+    tokio::task::spawn_blocking(move || {
+        let mut conn = db_state.conn.lock().unwrap();
+        scanner::scan_directory(&dir, &mut conn).map_err(|e| e.to_string())?;
+        Ok("Scanning complete".to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -93,22 +98,22 @@ fn remove_track_from_playlist(
 }
 
 #[tauri::command]
-fn play_audio(path: String, state: State<'_, audio::AudioState>) -> Result<(), String> {
+pub async fn play_audio(path: String, state: State<'_, audio::AudioState>) -> Result<(), String> {
     state.tx.send(audio::AudioCommand::Play(path)).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn pause_audio(state: State<'_, audio::AudioState>) -> Result<(), String> {
+pub async fn pause_audio(state: State<'_, audio::AudioState>) -> Result<(), String> {
     state.tx.send(audio::AudioCommand::Pause).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn resume_audio(state: State<'_, audio::AudioState>) -> Result<(), String> {
+pub async fn resume_audio(state: State<'_, audio::AudioState>) -> Result<(), String> {
     state.tx.send(audio::AudioCommand::Resume).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-fn set_volume(volume: f32, state: State<'_, audio::AudioState>) -> Result<(), String> {
+pub async fn set_volume(volume: f32, state: State<'_, audio::AudioState>) -> Result<(), String> {
     state
         .tx
         .send(audio::AudioCommand::SetVolume(volume.clamp(0.0, 1.0)))
@@ -116,17 +121,23 @@ fn set_volume(volume: f32, state: State<'_, audio::AudioState>) -> Result<(), St
 }
 
 #[tauri::command]
-fn get_playback_pos_ms(state: State<'_, audio::AudioState>) -> Result<u64, String> {
+pub async fn get_playback_pos_ms(state: State<'_, audio::AudioState>) -> Result<u64, String> {
     let (tx, rx) = std::sync::mpsc::channel();
     state
         .tx
         .send(audio::AudioCommand::GetPos(tx))
         .map_err(|e| e.to_string())?;
-    rx.recv().map_err(|e| e.to_string())
+    
+    // Use spawn_blocking to wait for the audio thread reply without blocking the async runtime
+    tokio::task::spawn_blocking(move || {
+        rx.recv().map_err(|e| e.to_string())
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
-fn seek_playback_ms(pos_ms: u64, state: State<'_, audio::AudioState>) -> Result<(), String> {
+pub async fn seek_playback_ms(pos_ms: u64, state: State<'_, audio::AudioState>) -> Result<(), String> {
     state
         .tx
         .send(audio::AudioCommand::Seek(pos_ms))
@@ -134,13 +145,20 @@ fn seek_playback_ms(pos_ms: u64, state: State<'_, audio::AudioState>) -> Result<
 }
 
 #[tauri::command]
-fn fetch_track_lyrics(
+pub async fn fetch_track_lyrics(
     track_id: i64,
     state: State<'_, database::DbState>,
     app_state: State<'_, AppState>,
 ) -> Result<database::LyricsPayload, String> {
-    let conn = state.conn.lock().unwrap();
-    metadata::fetch_track_lyrics(&app_state.app_dir, &conn, track_id)
+    let app_dir = app_state.app_dir.clone();
+    let db_state = state.inner().clone();
+    
+    tokio::task::spawn_blocking(move || {
+        let conn = db_state.conn.lock().unwrap();
+        metadata::fetch_track_lyrics(&app_dir, &conn, track_id)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
@@ -206,13 +224,20 @@ async fn fetch_artist_info(
 }
 
 #[tauri::command]
-fn fetch_album_art(
+pub async fn fetch_album_art(
     album_id: i64,
     state: State<'_, database::DbState>,
     app_state: State<'_, AppState>,
 ) -> Result<database::AlbumArtPayload, String> {
-    let conn = state.conn.lock().unwrap();
-    metadata::fetch_album_art(&app_state.app_dir, &conn, album_id)
+    let app_dir = app_state.app_dir.clone();
+    let db_state = state.inner().clone();
+    
+    tokio::task::spawn_blocking(move || {
+        let conn = db_state.conn.lock().unwrap();
+        metadata::fetch_album_art(&app_dir, &conn, album_id)
+    })
+    .await
+    .map_err(|e| e.to_string())?
 }
 
 #[tauri::command]
