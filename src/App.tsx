@@ -261,7 +261,7 @@ function AppContent() {
   }, [currentTrack, handlePlayTrack, isPlaying, tracks]);
 
   const [isSeeking, setIsSeeking] = useState(false);
-  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const seekTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleSeek = useCallback(async (posMs: number) => {
     try {
