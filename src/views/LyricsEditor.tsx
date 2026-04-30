@@ -124,8 +124,10 @@ const LyricsSearchSection = ({ currentTrack, onApplyLyrics }: { currentTrack: an
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-          InputProps={{
-            startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />,
+          slotProps={{
+            input: {
+              startAdornment: <SearchIcon sx={{ mr: 1, color: 'text.secondary', fontSize: 18 }} />,
+            },
           }}
           sx={{
             '& .MuiOutlinedInput-root': {
@@ -200,7 +202,7 @@ const LyricsSearchSection = ({ currentTrack, onApplyLyrics }: { currentTrack: an
               </Box>
 
               <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography variant="body2" fontWeight={600} noWrap>
+                <Typography variant="body2" sx={{ fontWeight: 600 }} noWrap>
                   {item.title}
                 </Typography>
                 <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }} noWrap>
@@ -290,7 +292,7 @@ export const LyricsEditor = ({ currentTrack, playbackPosMs, onBack, onSeek }: Ly
         {!showSearch ? (
           <Box sx={{ mb: 4, p: 2, borderRadius: '12px', bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <Box>
-              <Typography variant="body2" fontWeight={600}>Missing lyrics?</Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600 }}>Missing lyrics?</Typography>
               <Typography variant="caption" color="text.secondary">Search and download from online services</Typography>
             </Box>
             <Button 
@@ -359,7 +361,11 @@ export const LyricsEditor = ({ currentTrack, playbackPosMs, onBack, onSeek }: Ly
                   variant="standard" 
                   placeholder="Lyric line..."
                   value={line.text} 
-                  InputProps={{ disableUnderline: true }}
+                  slotProps={{
+                    input: {
+                      disableUnderline: true,
+                    },
+                  }}
                   onChange={(e) => {
                     const newLines = [...lyricsLines];
                     newLines[idx].text = e.target.value;
