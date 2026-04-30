@@ -260,17 +260,28 @@ function AppContent() {
     }
   }, [currentTrack, handlePlayTrack, isPlaying, tracks]);
 
+  const [isSeeking, setIsSeeking] = useState(false);
+  const seekTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
   const handleSeek = useCallback(async (posMs: number) => {
     try {
+      setIsSeeking(true);
+      if (seekTimeoutRef.current) clearTimeout(seekTimeoutRef.current);
+      
       await seekPlaybackMs(Math.max(0, Math.floor(posMs)));
       setPlaybackPosMs(Math.max(0, Math.floor(posMs)));
+      
+      // Keep guard active for a moment to let backend stabilize
+      seekTimeoutRef.current = setTimeout(() => {
+        setIsSeeking(false);
+      }, 1000);
     } catch {
-      // seek is best-effort depending on decoder support
+      setIsSeeking(false);
     }
   }, []);
 
   useEffect(() => {
-    if (!currentTrack || !isPlaying) {
+    if (!currentTrack || !isPlaying || isSeeking) {
       return;
     }
 
@@ -279,7 +290,7 @@ function AppContent() {
       void (async () => {
         try {
           const next = await getPlaybackPosMs();
-          if (!cancelled) {
+          if (!cancelled && !isSeeking) {
             setPlaybackPosMs(next);
           }
         } catch {
@@ -292,7 +303,7 @@ function AppContent() {
       cancelled = true;
       window.clearInterval(interval);
     };
-  }, [currentTrack, isPlaying]);
+  }, [currentTrack, isPlaying, isSeeking]);
 
   const handleSkip = useCallback(async (direction: -1 | 1, fromTrackEnd = false) => {
     if (tracks.length === 0 || queueTrackIds.length === 0) {

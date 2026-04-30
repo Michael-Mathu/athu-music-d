@@ -21,7 +21,7 @@ use crate::mpris_smtc::update_os_metadata;
 use crate::lyrics::download_and_embed_lyrics;
 
 #[tauri::command]
-pub async fn scan_local_files(dir: String, state: State<'_, database::DbState>) -> Result<String, String> {
+async fn scan_local_files(dir: String, state: State<'_, database::DbState>) -> Result<String, String> {
     let db_state = state.inner().clone();
     tokio::task::spawn_blocking(move || {
         let mut conn = db_state.conn.lock().unwrap();
@@ -98,22 +98,22 @@ fn remove_track_from_playlist(
 }
 
 #[tauri::command]
-pub async fn play_audio(path: String, state: State<'_, audio::AudioState>) -> Result<(), String> {
+async fn play_audio(path: String, state: State<'_, audio::AudioState>) -> Result<(), String> {
     state.tx.send(audio::AudioCommand::Play(path)).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn pause_audio(state: State<'_, audio::AudioState>) -> Result<(), String> {
+async fn pause_audio(state: State<'_, audio::AudioState>) -> Result<(), String> {
     state.tx.send(audio::AudioCommand::Pause).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn resume_audio(state: State<'_, audio::AudioState>) -> Result<(), String> {
+async fn resume_audio(state: State<'_, audio::AudioState>) -> Result<(), String> {
     state.tx.send(audio::AudioCommand::Resume).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
-pub async fn set_volume(volume: f32, state: State<'_, audio::AudioState>) -> Result<(), String> {
+async fn set_volume(volume: f32, state: State<'_, audio::AudioState>) -> Result<(), String> {
     state
         .tx
         .send(audio::AudioCommand::SetVolume(volume.clamp(0.0, 1.0)))
@@ -121,7 +121,7 @@ pub async fn set_volume(volume: f32, state: State<'_, audio::AudioState>) -> Res
 }
 
 #[tauri::command]
-pub async fn get_playback_pos_ms(state: State<'_, audio::AudioState>) -> Result<u64, String> {
+async fn get_playback_pos_ms(state: State<'_, audio::AudioState>) -> Result<u64, String> {
     let (tx, rx) = std::sync::mpsc::channel();
     state
         .tx
@@ -137,7 +137,7 @@ pub async fn get_playback_pos_ms(state: State<'_, audio::AudioState>) -> Result<
 }
 
 #[tauri::command]
-pub async fn seek_playback_ms(pos_ms: u64, state: State<'_, audio::AudioState>) -> Result<(), String> {
+async fn seek_playback_ms(pos_ms: u64, state: State<'_, audio::AudioState>) -> Result<(), String> {
     state
         .tx
         .send(audio::AudioCommand::Seek(pos_ms))
@@ -145,7 +145,7 @@ pub async fn seek_playback_ms(pos_ms: u64, state: State<'_, audio::AudioState>) 
 }
 
 #[tauri::command]
-pub async fn fetch_track_lyrics(
+async fn fetch_track_lyrics(
     track_id: i64,
     state: State<'_, database::DbState>,
     app_state: State<'_, AppState>,
@@ -224,7 +224,7 @@ async fn fetch_artist_info(
 }
 
 #[tauri::command]
-pub async fn fetch_album_art(
+async fn fetch_album_art(
     album_id: i64,
     state: State<'_, database::DbState>,
     app_state: State<'_, AppState>,
