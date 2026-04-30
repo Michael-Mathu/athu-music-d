@@ -7,12 +7,13 @@ mod mpris_smtc;
 mod apis;
 mod lyrics;
 
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::{Manager, State};
 use crate::mpris_smtc::OSControlsState;
 
+#[derive(Clone)]
 pub struct AppState {
-    pub app_dir: std::path::PathBuf,
+    pub app_dir: Arc<std::path::PathBuf>,
 }
 
 // Re-export commands from modules
@@ -290,10 +291,10 @@ pub fn run() {
             
             let conn = database::init_db(&app_dir).expect("Failed to initialize database");
             app.manage(database::DbState {
-                conn: Mutex::new(conn),
+                conn: Arc::new(Mutex::new(conn)),
             });
             app.manage(AppState {
-                app_dir: app_dir.clone(),
+                app_dir: Arc::new(app_dir),
             });
             
             let audio_tx = audio::init_audio_thread();
