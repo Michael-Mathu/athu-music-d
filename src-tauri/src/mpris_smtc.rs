@@ -1,7 +1,7 @@
 use souvlaki::{
     MediaControlEvent, MediaControls, MediaMetadata, MediaPlayback, PlatformConfig,
 };
-use tauri::{AppHandle, Emitter, Manager};
+use tauri::{AppHandle, Emitter};
 use std::sync::Mutex;
 
 pub struct OSControlsState {
