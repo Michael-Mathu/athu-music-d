@@ -12,6 +12,7 @@ interface PlaylistsProps {
   onAddCurrentTrack: (playlistId: number) => void;
   onRemoveTrack: (playlistId: number, trackId: number) => void;
   onCreatePlaylist: (name: string) => void;
+  onDeletePlaylist: (playlistId: number) => void;
 }
 
 export const Playlists = ({
@@ -21,9 +22,11 @@ export const Playlists = ({
   onAddCurrentTrack,
   onRemoveTrack,
   onCreatePlaylist,
+  onDeletePlaylist,
 }: PlaylistsProps) => {
   const theme = useTheme();
   const vinyl = theme.vinyl;
+  const isDark = theme.palette.mode === 'dark';
   const [newPlaylistName, setNewPlaylistName] = useState('');
 
   return (
@@ -32,10 +35,11 @@ export const Playlists = ({
       <Box sx={{ px: 3, pt: 3, pb: 2 }}>
         <Box 
           sx={{ 
-            bgcolor: '#2A2A2A', 
+            bgcolor: isDark ? '#2A2A2A' : '#FFFFFF', 
             borderRadius: '10px', 
             p: '16px',
-            border: '0.5px solid rgba(255,255,255,0.08)'
+            border: isDark ? '0.5px solid rgba(255,255,255,0.08)' : '0.5px solid rgba(0,0,0,0.1)',
+            boxShadow: isDark ? 'none' : '0 2px 8px rgba(0,0,0,0.05)',
           }}
         >
           <Typography sx={{ fontWeight: 600, fontSize: 14, mb: 1.5 }}>
@@ -46,26 +50,33 @@ export const Playlists = ({
               placeholder="Playlist name (e.g. Summer Vibes)"
               value={newPlaylistName}
               onChange={(e) => setNewPlaylistName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && newPlaylistName.trim()) {
+                  onCreatePlaylist(newPlaylistName.trim());
+                  setNewPlaylistName('');
+                }
+              }}
               sx={{
                 flexGrow: 1,
-                bgcolor: '#1E1E1E',
-                color: '#FFFFFF',
+                bgcolor: isDark ? '#1E1E1E' : '#F5F5F5',
+                color: 'text.primary',
                 borderRadius: '8px',
                 px: 2,
                 py: 1,
                 fontSize: 14,
-                border: '0.5px solid rgba(255,255,255,0.08)',
+                border: '0.5px solid',
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)',
               }}
             />
             <Button
               variant="contained"
-              disabled={!newPlaylistName}
+              disabled={!newPlaylistName.trim()}
               onClick={() => {
-                onCreatePlaylist(newPlaylistName);
+                onCreatePlaylist(newPlaylistName.trim());
                 setNewPlaylistName('');
               }}
               sx={{
-                bgcolor: 'var(--adw-accent, #3584E4)',
+                bgcolor: `var(--adw-accent, ${theme.palette.primary.main})`,
                 color: '#FFFFFF',
                 borderRadius: '8px',
                 fontWeight: 700,
@@ -73,7 +84,7 @@ export const Playlists = ({
                 textTransform: 'none',
                 px: 3,
                 '&:hover': {
-                  bgcolor: 'var(--adw-accent, #3584E4)',
+                  bgcolor: `var(--adw-accent, ${theme.palette.primary.main})`,
                   opacity: 0.9
                 }
               }}
@@ -84,17 +95,26 @@ export const Playlists = ({
         </Box>
       </Box>
 
+      {/* Empty state */}
+      {playlists.length === 0 && (
+        <Box sx={{ px: 4, py: 6, textAlign: 'center' }}>
+          <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
+            No playlists yet. Create your first one above.
+          </Typography>
+        </Box>
+      )}
+
       {/* Playlists List */}
       <Box sx={{ px: 2, display: 'flex', flexDirection: 'column' }}>
         {playlists.map((playlist) => (
           <Box key={playlist.id} sx={{ mb: 3 }}>
-             <Box
+            <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 p: 1,
                 borderRadius: `${vinyl.radius.row}px`,
-                bgcolor: 'rgba(255,255,255,0.02)',
+                bgcolor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
                 height: 64,
                 gap: 2,
                 px: 2,
@@ -104,12 +124,13 @@ export const Playlists = ({
               <Box sx={{ 
                 width: 44, 
                 height: 44, 
-                bgcolor: 'color-mix(in srgb, var(--adw-accent, #3584E4) 10%, transparent)',
-                color: 'var(--adw-accent, #3584E4)',
+                bgcolor: `color-mix(in srgb, var(--adw-accent, ${theme.palette.primary.main}) 10%, transparent)`,
+                color: `var(--adw-accent, ${theme.palette.primary.main})`,
                 borderRadius: '8px',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center'
+                justifyContent: 'center',
+                flexShrink: 0,
               }}>
                 <QueueMusicRoundedIcon />
               </Box>
@@ -117,7 +138,7 @@ export const Playlists = ({
               <Box sx={{ flexGrow: 1 }}>
                 <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{playlist.name}</Typography>
                 <Typography sx={{ fontSize: 12, color: theme.palette.text.secondary }}>
-                  {playlist.track_count} Tracks
+                  {playlist.track_count} {playlist.track_count === 1 ? 'Track' : 'Tracks'}
                 </Typography>
               </Box>
 
@@ -131,18 +152,28 @@ export const Playlists = ({
                   textTransform: 'none',
                   fontSize: 11,
                   fontWeight: 700,
-                  borderColor: 'var(--adw-accent, #3584E4)',
-                  color: 'var(--adw-accent, #3584E4)',
+                  borderColor: `var(--adw-accent, ${theme.palette.primary.main})`,
+                  color: `var(--adw-accent, ${theme.palette.primary.main})`,
                   '&:hover': {
-                    borderColor: 'var(--adw-accent, #3584E4)',
-                    bgcolor: 'color-mix(in srgb, var(--adw-accent, #3584E4) 10%, transparent)'
+                    borderColor: `var(--adw-accent, ${theme.palette.primary.main})`,
+                    bgcolor: `color-mix(in srgb, var(--adw-accent, ${theme.palette.primary.main}) 10%, transparent)`,
                   }
                 }}
               >
-                Add Current Track
+                Add Current
               </Button>
 
-              <IconButton size="small" sx={{ color: 'text.secondary', opacity: 0.5, '&:hover': { opacity: 1, color: '#E05C5C' } }}>
+              <IconButton
+                size="small"
+                aria-label={`Delete playlist ${playlist.name}`}
+                onClick={() => onDeletePlaylist(playlist.id)}
+                sx={{
+                  color: 'text.secondary',
+                  opacity: 0.5,
+                  '&:hover': { opacity: 1, color: '#E05C5C' },
+                  transition: 'opacity 200ms, color 200ms',
+                }}
+              >
                 <DeleteRoundedIcon sx={{ fontSize: 18 }} />
               </IconButton>
             </Box>
@@ -156,16 +187,22 @@ export const Playlists = ({
                     display: 'flex', 
                     alignItems: 'center', 
                     py: 0.5, 
-                    borderBottom: '0.5px solid rgba(255,255,255,0.03)',
-                    '&:hover .del-track': { opacity: 1 }
+                    borderBottom: `0.5px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'}`,
+                    '&:hover .del-track': { opacity: 1 },
                   }}
                 >
-                  <Typography sx={{ fontSize: 13, flexGrow: 1 }} noWrap>{track.title}</Typography>
+                  <Typography sx={{ fontSize: 13, flexGrow: 1, color: 'text.primary' }} noWrap>
+                    {track.title}
+                  </Typography>
+                  <Typography sx={{ fontSize: 12, color: 'text.secondary', mr: 1 }} noWrap>
+                    {track.artist}
+                  </Typography>
                   <IconButton 
                     className="del-track"
                     size="small" 
+                    aria-label={`Remove ${track.title} from playlist`}
                     onClick={() => onRemoveTrack(playlist.id, track.track_id)}
-                    sx={{ opacity: 0, color: 'text.secondary' }}
+                    sx={{ opacity: 0, color: 'text.secondary', transition: 'opacity 200ms' }}
                   >
                     <DeleteRoundedIcon sx={{ fontSize: 14 }} />
                   </IconButton>

@@ -8,6 +8,7 @@ import { useMemo } from 'react';
 import { useSort } from '../hooks/useSort';
 import { sortItems } from '../lib/utils/sorting';
 import { LibrarySort } from '../components/LibrarySort';
+import { Virtuoso } from 'react-virtuoso';
 
 const formatDuration = (duration: number) => {
   const minutes = Math.floor(duration / 60);
@@ -73,9 +74,11 @@ const ArtistDetailsInternal = ({ artist, albums, tracks, onBack, onPlayTrack }: 
           ) : data?.bio ? (
             <>
               <Typography 
-                sx={{ fontSize: 14, lineHeight: 1.7, color: 'text.primary' }} 
-                dangerouslySetInnerHTML={{ __html: data.bio }} 
-              />
+                sx={{ fontSize: 14, lineHeight: 1.7, color: 'text.primary' }}
+              >
+                {/* Strip HTML tags safely - no dangerouslySetInnerHTML */}
+                {data.bio.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#039;/g, "'").trim()}
+              </Typography>
               {data.details?.formed && (
                 <Typography variant="caption" sx={{ mt: 2, display: 'block', color: 'text.secondary' }}>
                   Formed: {data.details.formed}
@@ -205,23 +208,27 @@ export const Artists = ({ artists, detailId, albums, tracks, onSelectArtist, onB
   }
 
   return (
-    <Box sx={{ width: '100%', pb: 10 }}>
+    <Box sx={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column' }}>
       {/* Header & Sort */}
-      <Box sx={{ px: 4, pt: 3, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Box sx={{ px: 4, pt: 3, pb: 1, flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 11 }}>
           All Artists • {artists.length}
         </Typography>
         <LibrarySort value={sortOption} onChange={setSortOption} />
       </Box>
 
-      <Box sx={{ py: '8px' }}>
-        {sortedArtists.map((artist) => (
-          <ArtistRow 
-            key={artist.id} 
-            artist={artist} 
-            onClick={() => onSelectArtist(artist.id)} 
-          />
-        ))}
+      <Box sx={{ flexGrow: 1, py: '8px' }}>
+        <Virtuoso
+          style={{ height: '100%' }}
+          data={sortedArtists}
+          itemContent={(_index, artist) => (
+            <ArtistRow 
+              key={artist.id} 
+              artist={artist} 
+              onClick={() => onSelectArtist(artist.id)} 
+            />
+          )}
+        />
       </Box>
     </Box>
   );

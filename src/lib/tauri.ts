@@ -17,6 +17,7 @@ export const listArtists = () => invoke<Artist[]>("list_artists");
 export const listPlaylists = () => invoke<Playlist[]>("list_playlists");
 export const listPlaylistTracks = (playlistId: number) => invoke<PlaylistTrack[]>("list_playlist_tracks", { playlistId });
 export const createPlaylist = (name: string) => invoke<Playlist>("create_playlist", { name });
+export const deletePlaylist = (playlistId: number) => invoke<void>("delete_playlist", { playlistId });
 export const addTrackToPlaylist = (playlistId: number, trackId: number) => invoke<void>("add_track_to_playlist", { playlistId, trackId });
 export const removeTrackFromPlaylist = (playlistId: number, trackId: number) => invoke<void>("remove_track_from_playlist", { playlistId, trackId });
 export const scanLocalFiles = (dir: string) => invoke<string>("scan_local_files", { dir });

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Avatar, Skeleton } from '@mui/material';
+import { Box, Avatar, Skeleton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import logoSrc from '../assets/logo.png';
 
 interface CoverArtImageProps {
   src?: string | null;
@@ -33,11 +34,11 @@ export const CoverArtImage = ({
     img.onerror = () => setLoaded(true); // Show fallback on error
   }, [src]);
 
-  const finalSrc = src || "/src/assets/logo.png";
+  const finalSrc = src || logoSrc;
   const actualPadding = padding !== undefined ? padding : (src ? 0 : 4);
 
   return (
-    <Box sx={{ position: 'relative', width: size, height: size }}>
+    <Box sx={{ position: 'relative', width: size, height: size, flexShrink: 0 }}>
       {!loaded && (
         <Skeleton 
           variant="rectangular" 
@@ -73,5 +74,3 @@ export const CoverArtImage = ({
     </Box>
   );
 };
-
-import { Box } from '@mui/material';

@@ -13,24 +13,29 @@ export class ErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
+      const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       return (
         <div style={{
           padding: '40px',
           height: '100vh',
-          backgroundColor: '#1E1E1E',
-          color: '#FFFFFF',
-          fontFamily: 'system-ui, sans-serif'
+          backgroundColor: isDark ? '#1E1E1E' : '#FAFAFA',
+          color: isDark ? '#FFFFFF' : '#1A1A1A',
+          fontFamily: "'Inter', system-ui, sans-serif",
         }}>
-          <h2 style={{ marginBottom: '16px' }}>Something went wrong</h2>
+          <h2 style={{ marginBottom: '16px', fontWeight: 700 }}>Something went wrong</h2>
+          <p style={{ fontSize: '14px', marginBottom: '16px', opacity: 0.7 }}>
+            The app encountered an unexpected error. Please reload to continue.
+          </p>
           <pre style={{
-            backgroundColor: '#2A2A2A',
+            backgroundColor: isDark ? '#2A2A2A' : '#F0F0F0',
             padding: '20px',
             borderRadius: '8px',
             fontSize: '12px',
-            color: '#FF8A80',
+            color: '#E05C5C',
             overflow: 'auto',
             maxHeight: '300px',
-            whiteSpace: 'pre-wrap'
+            whiteSpace: 'pre-wrap',
+            border: isDark ? '0.5px solid rgba(255,255,255,0.08)' : '0.5px solid rgba(0,0,0,0.1)',
           }}>
             {this.state.error?.message}
             {'\n'}
@@ -41,13 +46,13 @@ export class ErrorBoundary extends React.Component<
             style={{
               marginTop: '16px',
               padding: '8px 20px',
-              background: 'var(--adw-accent, #3584E4)',
+              background: '#3584E4',
               border: 'none',
               borderRadius: '8px',
               color: '#fff',
               fontSize: '13px',
               fontWeight: 600,
-              cursor: 'pointer'
+              cursor: 'pointer',
             }}
           >
             Reload app

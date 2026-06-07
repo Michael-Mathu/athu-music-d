@@ -1,26 +1,25 @@
-import { Box, Typography, IconButton, InputBase, Button, InputAdornment, Menu, MenuItem } from '@mui/material';
+import { Box, Typography, IconButton, InputBase, Button, InputAdornment, Menu, MenuItem, Divider } from '@mui/material';
 import FolderOpenRoundedIcon from '@mui/icons-material/FolderOpenRounded';
 import CloudDownloadRoundedIcon from '@mui/icons-material/CloudDownloadRounded';
-import { downloadAndEmbedLyrics } from '../lib/tauri';
-
-
+import PlaylistAddRoundedIcon from '@mui/icons-material/PlaylistAddRounded';
+import { downloadAndEmbedLyrics, openDirectory } from '../lib/tauri';
 import { useTheme } from '@mui/material/styles';
-import { Track } from '../types/library';
+import { Playlist, Track } from '../types/library';
 import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
 import { useState, useMemo, memo } from 'react';
 import { useSort } from '../hooks/useSort';
 import { sortItems } from '../lib/utils/sorting';
 import { LibrarySort } from '../components/LibrarySort';
-import { openDirectory } from '../lib/tauri';
 import { Virtuoso } from 'react-virtuoso';
 import { CoverArtImage } from '../components/CoverArtImage';
-
 
 interface TracksProps {
   tracks: Track[];
   currentTrackId?: number;
   onPlayTrack: (id: number) => void;
   onScanLocalFiles: (path: string) => Promise<void>;
+  playlists: Playlist[];
+  onAddToPlaylist: (playlistId: number, trackId: number) => void;
 }
 
 const formatDuration = (duration: number) => {
@@ -29,7 +28,15 @@ const formatDuration = (duration: number) => {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-const TrackRow = memo(({ track, isActive, onPlayTrack }: { track: Track, isActive: boolean, onPlayTrack: (id: number) => void }) => {
+interface TrackRowProps {
+  track: Track;
+  isActive: boolean;
+  onPlayTrack: (id: number) => void;
+  playlists: Playlist[];
+  onAddToPlaylist: (playlistId: number, trackId: number) => void;
+}
+
+const TrackRow = memo(({ track, isActive, onPlayTrack, playlists, onAddToPlaylist }: TrackRowProps) => {
   const theme = useTheme();
   const vinyl = theme.vinyl;
   const isDark = theme.palette.mode === 'dark';
@@ -55,15 +62,12 @@ const TrackRow = memo(({ track, isActive, onPlayTrack }: { track: Track, isActiv
         track.album,
         track.duration
       );
-
-      // Optional: show a toast or notification
     } catch (err) {
-      console.error("Failed to download lyrics:", err);
+      console.error('Failed to download lyrics:', err);
     }
   };
 
   return (
-
     <Box
       onClick={() => onPlayTrack(track.id)}
       sx={{
@@ -77,36 +81,25 @@ const TrackRow = memo(({ track, isActive, onPlayTrack }: { track: Track, isActiv
         bgcolor: isActive ? vinyl.trackActive : 'transparent',
         '&:hover': {
           bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-          '& .more-btn': { opacity: 1 }
+          '& .more-btn': { opacity: 1 },
         },
         height: 52,
         gap: 2,
       }}
     >
-      <CoverArtImage
-        src={track.cover_art_data_url}
-        size={36}
-        borderRadius="4px"
-      />
+      <CoverArtImage src={track.cover_art_data_url} size={36} borderRadius="4px" />
       <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
         <Typography 
           sx={{ 
             fontWeight: 600, 
             fontSize: 14,
-            color: isActive ? 'var(--adw-accent, #3584E4)' : 'text.primary',
+            color: isActive ? `var(--adw-accent, ${theme.palette.primary.main})` : 'text.primary',
           }} 
           noWrap
         >
           {track.title}
         </Typography>
-        <Typography 
-          sx={{ 
-            fontWeight: 400, 
-            fontSize: 12,
-            color: 'text.secondary',
-          }} 
-          noWrap
-        >
+        <Typography sx={{ fontWeight: 400, fontSize: 12, color: 'text.secondary' }} noWrap>
           {track.artist} • {track.album}
         </Typography>
       </Box>
@@ -114,6 +107,7 @@ const TrackRow = memo(({ track, isActive, onPlayTrack }: { track: Track, isActiv
       <IconButton 
         className="more-btn"
         size="small" 
+        aria-label={`More options for ${track.title}`}
         onClick={handleMenuOpen}
         sx={{ opacity: 0, transition: 'opacity 200ms', color: 'text.secondary' }}
       >
@@ -131,9 +125,24 @@ const TrackRow = memo(({ track, isActive, onPlayTrack }: { track: Track, isActiv
           <CloudDownloadRoundedIcon sx={{ mr: 1.5, fontSize: 18, color: 'primary.main' }} />
           Download Synced Lyrics
         </MenuItem>
+        {playlists.length > 0 && [
+          <Divider key="div" />,
+          ...playlists.map((pl) => (
+            <MenuItem
+              key={pl.id}
+              onClick={(e) => {
+                e.stopPropagation();
+                onAddToPlaylist(pl.id, track.id);
+                handleMenuClose();
+              }}
+            >
+              <PlaylistAddRoundedIcon sx={{ mr: 1.5, fontSize: 18, color: 'text.secondary' }} />
+              Add to "{pl.name}"
+            </MenuItem>
+          )),
+        ]}
       </Menu>
 
-      
       <Typography sx={{ color: 'text.secondary', fontSize: 12, minWidth: 40, textAlign: 'right' }}>
         {formatDuration(track.duration)}
       </Typography>
@@ -141,7 +150,7 @@ const TrackRow = memo(({ track, isActive, onPlayTrack }: { track: Track, isActiv
   );
 });
 
-export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }: TracksProps) => {
+export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles, playlists, onAddToPlaylist }: TracksProps) => {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
   const [scanPath, setScanPath] = useState('');
@@ -149,11 +158,8 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
 
   const handleBrowse = async () => {
     const path = await openDirectory();
-    if (path) {
-      setScanPath(path);
-    }
+    if (path) setScanPath(path);
   };
-
 
   const sortedTracks = useMemo(() => sortItems(tracks, sortOption), [tracks, sortOption]);
 
@@ -198,6 +204,7 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
                         onClick={handleBrowse} 
                         edge="end"
                         size="small"
+                        aria-label="Browse for music folder"
                         sx={{ color: 'primary.main' }}
                       >
                         <FolderOpenRoundedIcon sx={{ fontSize: 20 }} />
@@ -205,7 +212,6 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
                     </InputAdornment>
                   }
                 />
-
                 <Typography sx={{ color: 'text.secondary', fontSize: 12, mt: 1 }}>
                   Enter the absolute path to your music directory
                 </Typography>
@@ -213,6 +219,7 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
               <Button
                 variant="contained"
                 onClick={() => void onScanLocalFiles(scanPath)}
+                disabled={!scanPath.trim()}
                 disableElevation
                 sx={{
                   bgcolor: 'primary.main',
@@ -226,7 +233,7 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
                   whiteSpace: 'nowrap',
                 }}
               >
-                SCAN LIBRARY
+                SCAN
               </Button>
             </Box>
           </Box>
@@ -250,7 +257,9 @@ export const Tracks = ({ tracks, currentTrackId, onPlayTrack, onScanLocalFiles }
             <TrackRow 
               track={track} 
               isActive={track.id === currentTrackId} 
-              onPlayTrack={onPlayTrack} 
+              onPlayTrack={onPlayTrack}
+              playlists={playlists}
+              onAddToPlaylist={onAddToPlaylist}
             />
           )}
         />

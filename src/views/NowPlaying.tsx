@@ -186,11 +186,12 @@ export const NowPlaying = ({
 
           {/* Transport Controls */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 4 }}>
-            <IconButton onClick={onPrevious} sx={{ color: theme.palette.text.primary }}>
+            <IconButton onClick={onPrevious} aria-label="Previous track" sx={{ color: theme.palette.text.primary }}>
               <SkipPreviousRoundedIcon sx={{ fontSize: 28 }} />
             </IconButton>
             <IconButton 
               onClick={onTogglePlayback}
+              aria-label={isPlaying ? 'Pause' : 'Play'}
               sx={{ 
                 bgcolor: vinyl.adwBlue, 
                 color: '#FFFFFF',
@@ -200,14 +201,20 @@ export const NowPlaying = ({
             >
               {isPlaying ? <PauseRoundedIcon sx={{ fontSize: 28 }} /> : <PlayArrowRoundedIcon sx={{ fontSize: 28 }} />}
             </IconButton>
-            <IconButton onClick={onNext} sx={{ color: theme.palette.text.primary }}>
+            <IconButton onClick={onNext} aria-label="Next track" sx={{ color: theme.palette.text.primary }}>
               <SkipNextRoundedIcon sx={{ fontSize: 28 }} />
             </IconButton>
           </Box>
 
           {/* Secondary Controls */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
-            <IconButton size="small" onClick={onToggleShuffle} sx={{ color: shuffleEnabled ? vinyl.adwBlue : theme.palette.text.secondary }}>
+            <IconButton
+              size="small"
+              onClick={onToggleShuffle}
+              aria-label={shuffleEnabled ? 'Disable shuffle' : 'Enable shuffle'}
+              aria-pressed={shuffleEnabled}
+              sx={{ color: shuffleEnabled ? vinyl.adwBlue : theme.palette.text.secondary }}
+            >
               <ShuffleRoundedIcon sx={{ fontSize: 20 }} />
             </IconButton>
 
@@ -215,6 +222,7 @@ export const NowPlaying = ({
             <Box sx={{ display: 'flex', alignItems: 'center', width: 140, gap: 1 }}>
               <IconButton 
                 size="small" 
+                aria-label={volume === 0 ? 'Unmute' : 'Mute'}
                 onClick={() => onVolumeChange(volume === 0 ? 0.5 : 0)}
                 sx={{ p: 0 }}
               >
@@ -226,6 +234,7 @@ export const NowPlaying = ({
                 min={0}
                 max={1}
                 step={0.01}
+                aria-label="Volume"
                 onChange={(_, val) => onVolumeChange(val as number)}
                 sx={{
                   color: vinyl.adwBlue,
@@ -242,7 +251,13 @@ export const NowPlaying = ({
               />
             </Box>
 
-            <IconButton size="small" onClick={onCycleRepeatMode} sx={{ color: repeatMode !== 'off' ? vinyl.adwBlue : theme.palette.text.secondary }}>
+            <IconButton
+              size="small"
+              onClick={onCycleRepeatMode}
+              aria-label={repeatMode === 'off' ? 'Enable repeat all' : repeatMode === 'all' ? 'Enable repeat one' : 'Disable repeat'}
+              aria-pressed={repeatMode !== 'off'}
+              sx={{ color: repeatMode !== 'off' ? vinyl.adwBlue : theme.palette.text.secondary }}
+            >
               {repeatMode === 'one' ? <RepeatOneRoundedIcon sx={{ fontSize: 20 }} /> : <RepeatRoundedIcon sx={{ fontSize: 20 }} />}
             </IconButton>
           </Box>

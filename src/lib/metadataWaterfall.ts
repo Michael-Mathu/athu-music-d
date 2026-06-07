@@ -1,5 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
 import { useState, useEffect } from 'react';
+import { getCached, setCached } from './metadata';
 
 // --- Interfaces ---
 
@@ -10,40 +11,12 @@ export interface ArtistMeta {
   source: string;
 }
 
-// --- Caching ---
-
-const CACHE_PREFIX = 'athu-meta-v2-';
-const CACHE_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days
-
-const getCached = <T>(key: string): T | null => {
-  const item = localStorage.getItem(CACHE_PREFIX + key);
-  if (!item) return null;
-  try {
-    const { data, expiry } = JSON.parse(item);
-    if (Date.now() > expiry) {
-      localStorage.removeItem(CACHE_PREFIX + key);
-      return null;
-    }
-    return data;
-  } catch {
-    return null;
-  }
-};
-
-const setCached = <T>(key: string, data: T) => {
-  const item = {
-    data,
-    expiry: Date.now() + CACHE_TTL,
-  };
-  localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(item));
-};
-
 // --- Waterfall Command ---
-
+// Cache key uses 'artist-info-v7d' prefix to leverage the 7-day TTL
 export const fetchArtistInfo = async (artistName: string): Promise<ArtistMeta | null> => {
   if (!artistName || artistName === 'Unknown Artist') return null;
 
-  const cacheKey = `artist-info-${artistName}`;
+  const cacheKey = `artist-info-v7d-${artistName}`;
   const cached = getCached<ArtistMeta>(cacheKey);
   if (cached) return cached;
 

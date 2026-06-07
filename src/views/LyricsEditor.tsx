@@ -9,10 +9,12 @@ import ManageSearchRoundedIcon from '@mui/icons-material/ManageSearchRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import TimerRoundedIcon from '@mui/icons-material/TimerRounded';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import LyricsIcon from '@mui/icons-material/Lyrics';
 import DownloadIcon from '@mui/icons-material/Download';
 import { useTheme } from '../lib/ThemeContext';
+import { invoke } from '@tauri-apps/api/core';
 
 interface LyricsLine {
   time: number | null;
@@ -235,13 +237,31 @@ export const LyricsEditor = ({ currentTrack, playbackPosMs, onBack, onSeek }: Ly
     ));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const lrcContent = lyricsLines.map(line => {
       if (line.time === null) return line.text;
       return `[${formatTime(line.time)}] ${line.text}`;
     }).join('\n');
-    console.log("Saving lyrics:", lrcContent);
-    setSnackbar({ open: true, message: 'Saved to console' });
+
+    try {
+      if (currentTrack?.file_path) {
+        // Write LRC file alongside the audio file
+        const lrcPath = currentTrack.file_path.replace(/\.[^.]+$/, '.lrc');
+        await invoke('write_lrc_file', { path: lrcPath, content: lrcContent });
+        setSnackbar({ open: true, message: 'Lyrics saved successfully!' });
+      } else {
+        // No track loaded — log for now
+        console.log('LRC content:', lrcContent);
+        setSnackbar({ open: true, message: 'No track loaded — lyrics not saved to file' });
+      }
+    } catch (err) {
+      console.error('Failed to save lyrics:', err);
+      setSnackbar({ open: true, message: 'Failed to save lyrics. Check console for details.' });
+    }
+  };
+
+  const handleDeleteLine = (index: number) => {
+    setLyricsLines(prev => prev.filter((_, i) => i !== index));
   };
 
   const applyLyrics = (lrc: string) => {
@@ -341,51 +361,56 @@ export const LyricsEditor = ({ currentTrack, playbackPosMs, onBack, onSeek }: Ly
                 transition: 'background-color 0.2s'
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 2, py: 0.5, px: 1 }}>
-                <Typography 
-                  sx={{ 
-                    fontFamily: 'monospace', 
-                    fontSize: 12, 
-                    minWidth: 85, 
-                    color: line.time !== null ? 'primary.main' : 'text.disabled',
-                    cursor: line.time !== null ? 'pointer' : 'default',
-                    fontWeight: line.time !== null ? 700 : 400
-                  }}
-                  onClick={() => line.time !== null && onSeek(line.time)}
-                >
-                  {line.time !== null ? `[${formatTime(line.time)}]` : '[--:--.--]'}
-                </Typography>
-                
-                <TextField 
-                  fullWidth 
-                  variant="standard" 
-                  placeholder="Lyric line..."
-                  value={line.text} 
-                  slotProps={{
-                    input: {
-                      disableUnderline: true,
-                    },
-                  }}
-                  onChange={(e) => {
-                    const newLines = [...lyricsLines];
-                    newLines[idx].text = e.target.value;
-                    setLyricsLines(newLines);
-                  }}
-                  sx={{ 
-                    '& input': { 
-                      fontSize: 14, 
-                      py: 1,
-                      fontWeight: playbackPosMs >= (line.time || 0) && playbackPosMs < (lyricsLines[idx+1]?.time || Infinity) ? 600 : 400
-                    } 
-                  }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 2, py: 0.5, px: 1 }}>
+                  <Typography 
+                    sx={{ 
+                      fontFamily: 'monospace', 
+                      fontSize: 12, 
+                      minWidth: 85, 
+                      color: line.time !== null ? 'primary.main' : 'text.disabled',
+                      cursor: line.time !== null ? 'pointer' : 'default',
+                      fontWeight: line.time !== null ? 700 : 400
+                    }}
+                    onClick={() => line.time !== null && onSeek(line.time)}
+                  >
+                    {line.time !== null ? `[${formatTime(line.time)}]` : '[--:--.--]'}
+                  </Typography>
+                  
+                  <TextField 
+                    fullWidth 
+                    variant="standard" 
+                    placeholder="Lyric line..."
+                    value={line.text} 
+                    slotProps={{
+                      input: {
+                        disableUnderline: true,
+                      },
+                    }}
+                    onChange={(e) => {
+                      const newLines = [...lyricsLines];
+                      newLines[idx].text = e.target.value;
+                      setLyricsLines(newLines);
+                    }}
+                    sx={{ 
+                      '& input': { 
+                        fontSize: 14, 
+                        py: 1,
+                        fontWeight: playbackPosMs >= (line.time || 0) && playbackPosMs < (lyricsLines[idx+1]?.time || Infinity) ? 600 : 400
+                      } 
+                    }}
+                  />
 
-                <Tooltip title="Stamp current time">
-                  <IconButton size="small" onClick={() => handleStamp(idx)} sx={{ color: 'text.secondary' }}>
-                    <TimerRoundedIcon sx={{ fontSize: 18 }} />
-                  </IconButton>
-                </Tooltip>
-              </Box>
+                  <Tooltip title="Stamp current time">
+                    <IconButton size="small" onClick={() => handleStamp(idx)} sx={{ color: 'text.secondary' }}>
+                      <TimerRoundedIcon sx={{ fontSize: 18 }} />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete line">
+                    <IconButton size="small" onClick={() => handleDeleteLine(idx)} sx={{ color: 'text.secondary', '&:hover': { color: '#E05C5C' } }}>
+                      <DeleteRoundedIcon sx={{ fontSize: 16 }} />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
             </ListItem>
           ))}
           

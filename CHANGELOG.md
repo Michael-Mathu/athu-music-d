@@ -2,7 +2,43 @@
 
 All notable changes to the Athu Music D project will be documented in this file.
 
+## [0.5.0] - 2026-06-07
+
+### Added
+- **Functional Shuffle**: Shuffle now actually reorders the queue using Fisher-Yates algorithm, keeping the current track at the head.
+- **Search Overlay**: Full-featured search across tracks, albums, and artists with keyboard navigation (Escape to close).
+- **Minimize/Maximize Controls**: Window minimize and maximize/restore buttons added to the HeaderBar.
+- **Delete Playlist**: Playlists can now be deleted via the trash icon.
+- **Add to Playlist**: Tracks context menu now shows all playlists for quick addition.
+- **Lyrics Editor: Save to File**: Saving now writes the LRC file alongside the audio file (e.g., `Track.mp3` → `Track.lrc`).
+- **Lyrics Editor: Delete Line**: Individual lines can now be removed in the editor.
+- **Settings: Change Folder & Rescan**: Both buttons are now wired up and functional.
+- **NavRail Tooltips**: Each navigation icon now shows a tooltip with the view name.
+- **Empty Queue State**: Queue view shows a helpful message when empty.
+- **Artists Virtualization**: Artists list now uses `react-virtuoso` for smooth performance at library scale.
+
+### Fixed
+- **Light Mode**: Fixed broken light mode in Playlists, NavRail, and Settings — all hard-coded dark colors replaced with theme-aware values.
+- **`CoverArtImage` Import Order**: Moved `Box` import to top of file (was at line 77 — after usage).
+- **`formatDuration` in Queue**: Fixed float seconds bug — `Math.floor` now applied correctly.
+- **`dangerouslySetInnerHTML` XSS Risk**: Artist bio now strips HTML tags safely instead of rendering raw HTML.
+- **Cover Art Fallback Path**: Now uses a bundled import (`import logoSrc from '…'`) instead of `/src/assets/logo.png` which breaks in production builds.
+- **ErrorBoundary**: Now adapts to the system color scheme instead of always showing a dark background.
+- **Version Display**: Settings now correctly shows v0.5.0.
+
+### Changed
+- **App.tsx Refactor**: Extracted library state into `useLibrary` hook and playback state into `usePlayback` hook. `App.tsx` reduced from 582 to ~230 lines.
+- **Caching Consolidation**: Merged the two separate `getCached`/`setCached` implementations (from `metadata.ts` and `metadataWaterfall.ts`) into one shared module.
+
+### Removed
+- **Dead Code**: Removed unused `BottomBar.tsx` (271 lines), `useArtistImage`, `fetchArtistMetadata`, `fetchArtistImage` from `metadata.ts`.
+- **Dead Dependencies**: Removed `animejs`, `react-router-dom`, and `@types/animejs` from `package.json`.
+- **Roboto Serif**: Removed the Google Fonts link from `index.html` (font was removed in v0.3.0 but the link remained).
+
+---
+
 ## [0.3.0] - 2026-04-24
+
 
 ### Added
 - **Adwaita Light Mode**: Fully implemented native-feeling light theme with automatic system-wide switching.
