@@ -58,9 +58,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: v__VERSION__
-          releaseName: "Athu Music D v__VERSION__"
+          tagName: ${{ github.ref_name }}
+          releaseName: "Athu Music D ${{ github.ref_name }}"
           releaseBody: "Athu Music D: Multi-platform release including AppImage."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
