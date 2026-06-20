@@ -25,21 +25,22 @@
 
 ## ✦ About
 
-Athu Music D is a high-performance desktop music player that puts your local library first. With a meticulously crafted **Vinyl-inspired dual‑panel layout** and full compliance with the **GTK4 / Libadwaita** design language, it delivers a premium, native‑feeling experience on **Windows** and **Linux**.
+Athu Music D is a high-performance desktop music player that puts your local library first. With a meticulously crafted **Apple Music / Songbird-inspired design**, it features translucent glassmorphism, fluid micro-interactions, and a premium dual-panel layout, delivering a native-feeling experience on **Windows** and **Linux**.
 
-Every pixel has been considered — from the 12 px rounded surfaces and subtle 0.5 px borders to the adaptive light / dark colour system powered by Adwaita Blue. Under the hood, a Rust audio engine (Rodio) and SQLite-backed library ensure instant startup, smooth scrolling, and minimal memory usage.
+Every pixel has been considered — from the unified token-based spacing and radius scale to the dynamic cover-art radial gradients that subtly illuminate the background. Under the hood, a Rust audio engine (Rodio) and SQLite-backed library ensure instant startup, smooth scrolling, and minimal memory usage.
 
 ---
 
 ## ✦ Preview
 
 <p align="center">
-  <em>Screenshots coming soon — stay tuned!</em>
+  <img src="assets/screenshot-1.png" alt="Athu Music D - Now Playing" width="800" />
 </p>
 
-| Dark Mode | Light Mode |
-|:---------:|:----------:|
-| • | • |
+<p align="center">
+  <img src="assets/screenshot-2.png" alt="Athu Music D - Library View" width="400" />
+  <img src="assets/screenshot-3.png" alt="Athu Music D - Detail View" width="400" />
+</p>
 
 ---
 
@@ -64,9 +65,12 @@ Every pixel has been considered — from the 12 px rounded surfaces and subtle 0
 - **System Tray** — Minimise to tray with quick access to playback controls and now‑playing info.
 
 ### 🎨 Design & Theming
-- **Adaptive Light / Dark Mode** — Choose Light (`#FAFAFA`), Dark (`#242424`), or follow your OS preference automatically.
-- **Custom Accent Colour** — Adwaita Blue (`#3584E4`) by default, fully configurable in Settings.
-- **Inter / SF Pro Typography** — A clean, modern typeface for a high‑end desktop feel.
+- **Apple Music-Inspired Glassmorphism** — Layered, translucent glass panels with `backdrop-filter: blur(40px)`.
+- **Adaptive Light / Dark Mode** — Deep space dark (`#0D0D0F`) or crisp light (`#FBFBFD`), matching your system preference.
+- **Custom Accent Presets** — Choose from 8 curated accents including Songbird Red, Electric Indigo, Lavender, and Teal.
+- **Contextual Glows** — Real-time cover-art dominant color extraction powers subtle radial gradients behind the Now Playing panel.
+- **Fluid Motion & Accessibility** — Spring-physics micro-interactions that gracefully disable if `prefers-reduced-motion` is detected.
+- **SF Pro / Inter Typography** — A clean, modern typeface for a high‑end desktop feel.
 
 ---
 
@@ -172,16 +176,16 @@ athu-music-d/
 
 ## ✦ Design System
 
-Athu Music D follows the Libadwaita / GTK4 human interface guidelines as closely as possible within a React + MUI context.
+Athu Music D features a custom, token-driven design system inspired by Apple Music, meticulously overriding MUI defaults.
 
 | Token     | Value                                                          |
 |:----------|:---------------------------------------------------------------|
-| **Accent**  | #3584E4 (Adwaita Blue) — configurable                          |
-| **Dark BG** | #242424 (left panel) / #2A2A2A (right panel)                  |
-| **Light BG**| #FAFAFA (left panel) / #FFFFFF (right panel)                  |
-| **Radii**   | 12 px (window), 8 px (buttons), 4 px (rows)                   |
-| **Borders** | 0.5 px rgba(255,255,255,0.08) dark / rgba(0,0,0,0.08) light    |
-| **Typography**| Inter / SF Pro — 400 & 600 weights                           |
+| **Accent**  | Songbird Red (`#FA2D48`) by default — 8 configurable presets     |
+| **Dark BG** | Deep Base (`#0D0D0F`), Elevated (`#1A1A1D`), Surface (`#232327`) |
+| **Light BG**| Frost Base (`#FBFBFD`), Elevated (`#FFFFFF`), Surface (`#F5F5F7`)|
+| **Radii**   | 12 px (window & cards), 8 px (buttons), 6 px (rows)            |
+| **Surfaces**| Frosted Glass (`rgba(28,28,32,0.72)`) with 40px blur             |
+| **Typography**| SF Pro / Inter — refined scaling for Display & Titles            |
 
 For detailed version history, see [CHANGELOG.md](CHANGELOG.md).
 
