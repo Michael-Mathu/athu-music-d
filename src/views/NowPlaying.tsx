@@ -8,12 +8,15 @@ import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import SkipNextRoundedIcon from '@mui/icons-material/SkipNextRounded';
 import SkipPreviousRoundedIcon from '@mui/icons-material/SkipPreviousRounded';
 import VolumeUpRoundedIcon from '@mui/icons-material/VolumeUpRounded';
+import VolumeDownRoundedIcon from '@mui/icons-material/VolumeDownRounded';
 import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
 import RepeatRoundedIcon from '@mui/icons-material/RepeatRounded';
 import RepeatOneRoundedIcon from '@mui/icons-material/RepeatOneRounded';
 import CloudDownloadRoundedIcon from '@mui/icons-material/CloudDownloadRounded';
 import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import TextFieldsRoundedIcon from '@mui/icons-material/TextFieldsRounded';
+import ChatBubbleRoundedIcon from '@mui/icons-material/ChatBubbleRounded';
+import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded';
 import { downloadAndEmbedLyrics } from '../lib/tauri';
 import { CoverArtImage } from '../components/CoverArtImage';
 
@@ -276,121 +279,138 @@ export const NowPlaying = ({
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, mb: 5 }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, mb: 4 }}>
             <IconButton
               onClick={onPrevious}
               aria-label="Previous track"
               sx={{
-                color: theme.palette.text.primary,
-                width: 44,
-                height: 44,
-                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+                color: 'text.primary',
+                width: 48,
+                height: 48,
+                '&:hover': { opacity: 0.8 },
+                transition: 'transform 0.1s',
+                '&:active': { transform: 'scale(0.9)' },
               }}
             >
-              <SkipPreviousRoundedIcon sx={{ fontSize: 28 }} />
+              <SkipPreviousRoundedIcon sx={{ fontSize: 40 }} />
             </IconButton>
             <IconButton
               onClick={onTogglePlayback}
               aria-label={isPlaying ? 'Pause' : 'Play'}
               sx={{
-                bgcolor: accent,
-                color: '#FFFFFF',
-                width: 56,
-                height: 56,
-                borderRadius: '16px',
-                '&:hover': { bgcolor: accent, opacity: 0.92 },
-                boxShadow: `0 6px 20px ${accent}66`,
-                transition: 'all 150ms cubic-bezier(0.25, 0.1, 0.25, 1)',
-                '&:active': { transform: 'scale(0.94)' },
+                color: 'text.primary',
+                width: 64,
+                height: 64,
+                '&:hover': { opacity: 0.8 },
+                transition: 'transform 0.1s',
+                '&:active': { transform: 'scale(0.9)' },
               }}
             >
-              {isPlaying ? <PauseRoundedIcon sx={{ fontSize: 28 }} /> : <PlayArrowRoundedIcon sx={{ fontSize: 28 }} />}
+              {isPlaying ? <PauseRoundedIcon sx={{ fontSize: 56 }} /> : <PlayArrowRoundedIcon sx={{ fontSize: 56 }} />}
             </IconButton>
             <IconButton
               onClick={onNext}
               aria-label="Next track"
               sx={{
-                color: theme.palette.text.primary,
-                width: 44,
-                height: 44,
-                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+                color: 'text.primary',
+                width: 48,
+                height: 48,
+                '&:hover': { opacity: 0.8 },
+                transition: 'transform 0.1s',
+                '&:active': { transform: 'scale(0.9)' },
               }}
             >
-              <SkipNextRoundedIcon sx={{ fontSize: 28 }} />
+              <SkipNextRoundedIcon sx={{ fontSize: 40 }} />
             </IconButton>
           </Box>
 
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 2,
-              width: '100%',
-              px: 4,
-            }}
-          >
-            <IconButton
+          <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', px: 3, gap: 2, mb: 4 }}>
+            <VolumeDownRoundedIcon sx={{ fontSize: 22, color: 'text.secondary' }} />
+            <Slider
               size="small"
-              onClick={onToggleShuffle}
-              aria-label={shuffleEnabled ? 'Disable shuffle' : 'Enable shuffle'}
-              aria-pressed={shuffleEnabled}
+              value={volume}
+              min={0}
+              max={1}
+              step={0.01}
+              aria-label="Volume"
+              onChange={(_, val) => onVolumeChange(val as number)}
               sx={{
-                color: shuffleEnabled ? accent : 'text.secondary',
-                width: 36,
-                height: 36,
-                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                color: 'text.primary',
+                height: 6,
+                padding: '12px 0',
+                '& .MuiSlider-thumb': {
+                  width: 16,
+                  height: 16,
+                  backgroundColor: '#FFFFFF',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                  opacity: 0,
+                  transition: 'opacity 0.2s',
+                  '&:hover, &.Mui-focusVisible': {
+                    opacity: 1,
+                    boxShadow: '0 0 0 8px rgba(255,255,255,0.1)',
+                  },
+                },
+                '&:hover .MuiSlider-thumb': { opacity: 1 },
+                '& .MuiSlider-track': { border: 'none' },
+                '& .MuiSlider-rail': { opacity: 0.2 },
+              }}
+            />
+            <VolumeUpRoundedIcon sx={{ fontSize: 22, color: 'text.secondary' }} />
+          </Box>
+
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', px: 4 }}>
+            <IconButton
+              onClick={() => setActiveTab(activeTab === 'lyrics' ? 'player' : 'lyrics')}
+              sx={{ 
+                color: activeTab === 'lyrics' ? accent : 'text.secondary',
+                bgcolor: activeTab === 'lyrics' ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)') : 'transparent',
               }}
             >
-              <ShuffleRoundedIcon sx={{ fontSize: 18 }} />
+              <ChatBubbleRoundedIcon sx={{ fontSize: 22 }} />
             </IconButton>
 
-            <Box sx={{ display: 'flex', alignItems: 'center', width: 110, gap: 1 }}>
-              <IconButton
-                size="small"
-                aria-label={volume === 0 ? 'Unmute' : 'Mute'}
-                onClick={() => onVolumeChange(volume === 0 ? 0.5 : 0)}
-                sx={{ p: 0, width: 30, height: 30, color: 'text.secondary' }}
-              >
-                <VolumeUpRoundedIcon sx={{ fontSize: 16 }} />
-              </IconButton>
-              <Slider
-                size="small"
-                value={volume}
-                min={0}
-                max={1}
-                step={0.01}
-                aria-label="Volume"
-                onChange={(_, val) => onVolumeChange(val as number)}
-                sx={{
-                  color: accent,
-                  height: 4,
-                  padding: '4px 0',
-                  '& .MuiSlider-thumb': {
-                    width: 12,
-                    height: 12,
-                    backgroundColor: '#FFFFFF',
-                    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
-                  },
-                  '& .MuiSlider-track': { border: 'none' },
-                  '& .MuiSlider-rail': { opacity: 0.18, backgroundColor: theme.palette.text.primary },
-                }}
-              />
-            </Box>
-
-            <IconButton
-              size="small"
-              onClick={onCycleRepeatMode}
-              aria-label={repeatMode === 'off' ? 'Enable repeat all' : repeatMode === 'all' ? 'Enable repeat one' : 'Disable repeat'}
-              aria-pressed={repeatMode !== 'off'}
+            <Box
               sx={{
-                color: repeatMode !== 'off' ? accent : 'text.secondary',
-                width: 36,
-                height: 36,
-                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
+                display: 'flex',
+                alignItems: 'center',
+                bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                borderRadius: '24px',
+                p: 0.5,
               }}
             >
-              {repeatMode === 'one' ? <RepeatOneRoundedIcon sx={{ fontSize: 18 }} /> : <RepeatRoundedIcon sx={{ fontSize: 18 }} />}
+              <IconButton
+                size="small"
+                onClick={onToggleShuffle}
+                sx={{
+                  color: shuffleEnabled ? accent : 'text.primary',
+                  width: 36,
+                  height: 36,
+                  bgcolor: shuffleEnabled ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') : 'transparent',
+                  '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' },
+                }}
+              >
+                <ShuffleRoundedIcon sx={{ fontSize: 20 }} />
+              </IconButton>
+              
+              <Box sx={{ width: 1, height: 18, bgcolor: 'divider', mx: 0.5 }} />
+
+              <IconButton
+                size="small"
+                onClick={onCycleRepeatMode}
+                sx={{
+                  color: repeatMode !== 'off' ? accent : 'text.primary',
+                  width: 36,
+                  height: 36,
+                  bgcolor: repeatMode !== 'off' ? (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)') : 'transparent',
+                  '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.1)' },
+                }}
+              >
+                {repeatMode === 'one' ? <RepeatOneRoundedIcon sx={{ fontSize: 20 }} /> : <RepeatRoundedIcon sx={{ fontSize: 20 }} />}
+              </IconButton>
+            </Box>
+
+            <IconButton sx={{ color: 'text.secondary' }}>
+              <FormatListBulletedRoundedIcon sx={{ fontSize: 24 }} />
             </IconButton>
           </Box>
         </Box>
