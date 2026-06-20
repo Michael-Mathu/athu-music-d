@@ -59,11 +59,11 @@ export const HeaderBar = ({ onNavigate, onToggleSearch }: HeaderBarProps) => {
         justifyContent: 'space-between',
         px: 1,
         flexShrink: 0,
-        bgcolor: isDark ? 'rgba(26, 26, 29, 0.72)' : 'rgba(255, 255, 255, 0.72)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        bgcolor: isDark ? 'rgba(20, 20, 22, 0.65)' : 'rgba(250, 250, 253, 0.65)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         borderBottom: '0.5px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
       }}
     >
       <Box sx={{ display: 'flex', gap: 0.5, pointerEvents: 'none', width: 80 }} />

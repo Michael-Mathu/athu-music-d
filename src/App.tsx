@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, CssBaseline } from '@mui/material';
 import { HeaderBar } from './components/layout/HeaderBar';
 import { NavRail } from './components/layout/NavRail';
@@ -16,10 +16,11 @@ import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles';
 import { getAppTheme } from './theme';
 import { useLibrary } from './hooks/useLibrary';
 import { usePlayback } from './lib/usePlayback';
+import { useDominantColor } from './hooks/useDominantColor';
 import type { NavView } from './types/library';
 
 function AppContent() {
-  const { theme: appTheme, accentColor } = useAppTheme();
+  const { theme: appTheme, accentColor, dynamicColor, setDynamicColor } = useAppTheme();
 
   const resolvedMode = useMemo(() => {
     if (appTheme === 'system') {
@@ -29,8 +30,8 @@ function AppContent() {
   }, [appTheme]);
 
   const muiTheme = useMemo(
-    () => getAppTheme(resolvedMode, accentColor),
-    [resolvedMode, accentColor]
+    () => getAppTheme(resolvedMode, accentColor, dynamicColor),
+    [resolvedMode, accentColor, dynamicColor]
   );
 
   const vinyl = muiTheme.vinyl;
@@ -67,6 +68,13 @@ function AppContent() {
     handleCycleRepeatMode,
     refreshLyrics,
   } = usePlayback({ tracks, loadLibrary });
+
+  const coverSrc = currentTrack?.cover_art_data_url ?? null;
+  const dominantColor = useDominantColor(coverSrc, true);
+
+  useEffect(() => {
+    setDynamicColor(dominantColor);
+  }, [dominantColor, setDynamicColor]);
 
   const [navState, setNavState] = useState({
     view: 'queue' as NavView,
@@ -220,6 +228,8 @@ function AppContent() {
             borderTopLeftRadius: `${vinyl?.radius?.window ?? 12}px`,
             borderBottomLeftRadius: `${vinyl?.radius?.window ?? 12}px`,
             position: 'relative',
+            backdropFilter: 'blur(60px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(60px) saturate(180%)',
           }}
         >
           <NowPlaying
@@ -251,6 +261,8 @@ function AppContent() {
             borderBottomRightRadius: `${vinyl?.radius?.window ?? 12}px`,
             position: 'relative',
             overflow: 'hidden',
+            backdropFilter: 'blur(40px) saturate(160%)',
+            WebkitBackdropFilter: 'blur(40px) saturate(160%)',
           }}
         >
           <HeaderBar

@@ -42,10 +42,10 @@ export const NavRail = ({ activeView, onChange }: NavRailProps) => {
         height: 44,
         pl: '16px',
         borderBottom: '0.5px solid',
-        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
-        bgcolor: isDark ? 'rgba(26,26,29,0.72)' : 'rgba(245,245,247,0.72)',
-        backdropFilter: 'blur(20px)',
-        WebkitBackdropFilter: 'blur(20px)',
+        borderColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+        bgcolor: isDark ? 'rgba(20, 20, 22, 0.65)' : 'rgba(245, 245, 247, 0.65)',
+        backdropFilter: 'blur(24px) saturate(180%)',
+        WebkitBackdropFilter: 'blur(24px) saturate(180%)',
         flexShrink: 0,
       }}
     >

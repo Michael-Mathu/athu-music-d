@@ -30,14 +30,15 @@ declare module '@mui/material/styles' {
   }
 }
 
-export const getAppTheme = (mode: ThemeMode, accent: string) => {
+export const getAppTheme = (mode: ThemeMode, accent: string, dynamicColor?: string | null) => {
   const palette = mode === 'dark' ? darkColors : lightColors;
+  const primaryMain = dynamicColor ?? accent;
 
   return createTheme({
     palette: {
       mode,
       primary: {
-        main: accent,
+        main: primaryMain,
         contrastText: '#ffffff',
       },
       background: {

@@ -62,6 +62,7 @@ export const NowPlaying = ({
   const theme = useTheme();
   const vinyl = theme.vinyl;
   const isDark = theme.palette.mode === 'dark';
+  const accent = vinyl.adwBlue;
 
   const [activeTab, setActiveTab] = useState<'player' | 'lyrics'>('player');
   const lyricRefs = useRef<Map<number, HTMLElement | null>>(new Map());
@@ -106,33 +107,35 @@ export const NowPlaying = ({
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
-        pt: 'var(--space-4)',
-        px: 'var(--space-3)',
+        pt: 3,
+        px: 2,
         position: 'relative',
-        overflow: 'hidden',
+        overflow: 'visible',
       }}
     >
       <Box
         aria-hidden
         sx={{
           position: 'absolute',
-          top: -40,
-          left: -80,
-          width: 320,
-          height: 320,
-          background:
-            'radial-gradient(circle, var(--accent-glow, rgba(250,45,72,0.24)) 0%, transparent 70%)',
-          filter: 'blur(36px)',
-          opacity: isPlaying ? 1 : 0.6,
-          transition: 'opacity 600ms ease',
+          top: -80,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 400,
+          height: 400,
+          background: `radial-gradient(circle, ${accent}40 0%, transparent 70%)`,
+          filter: 'blur(60px)',
+          opacity: isPlaying ? 0.8 : 0.3,
+          transition: 'opacity 1000ms ease',
           pointerEvents: 'none',
+          zIndex: 0,
         }}
       />
+
       <Box
         sx={{
           display: 'flex',
           justifyContent: 'center',
-          mb: 'var(--space-4)',
+          mb: 3,
           position: 'relative',
           zIndex: 1,
         }}
@@ -141,11 +144,11 @@ export const NowPlaying = ({
           sx={{
             display: 'inline-flex',
             alignItems: 'center',
-            gap: 0.5,
-            px: 'var(--space-1-5, 6px)',
-            py: '3px',
-            borderRadius: '16px',
-            bgcolor: isDark ? 'rgba(255,255,255,0.09)' : 'rgba(0,0,0,0.07)',
+            gap: 0.25,
+            p: 0.5,
+            borderRadius: 3,
+            bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            minWidth: 0,
           }}
         >
           <Box
@@ -154,20 +157,20 @@ export const NowPlaying = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 0.5,
-              px: 'var(--space-2)',
-              py: '3px',
-              borderRadius: '14px',
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 2.5,
               cursor: 'pointer',
-              bgcolor: activeTab === 'player' ? 'var(--accent-subtle, rgba(250,45,72,0.12))' : 'transparent',
-              color:
-                activeTab === 'player'
-                  ? 'var(--accent-default, #FA2D48)'
-                  : 'text.secondary',
-              transition: 'background-color 150ms ease, color 150ms ease',
+              bgcolor: activeTab === 'player' ? accent : 'transparent',
+              color: activeTab === 'player' ? '#FFF' : 'text.secondary',
+              transition: 'all 150ms ease',
+              whiteSpace: 'nowrap',
+              lineHeight: 1,
+              '&:hover': { bgcolor: activeTab === 'player' ? accent : 'rgba(255,255,255,0.05)' },
             }}
           >
-            <MusicNoteRoundedIcon sx={{ fontSize: 14 }} />
-            <Typography sx={{ fontSize: 12, fontWeight: 600 }}>Player</Typography>
+            <MusicNoteRoundedIcon sx={{ fontSize: 13 }} />
+            <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1 }}>Player</Typography>
           </Box>
           <Box
             onClick={() => setActiveTab('lyrics')}
@@ -175,20 +178,20 @@ export const NowPlaying = ({
               display: 'inline-flex',
               alignItems: 'center',
               gap: 0.5,
-              px: 'var(--space-2)',
-              py: '3px',
-              borderRadius: '14px',
+              px: 1.5,
+              py: 0.5,
+              borderRadius: 2.5,
               cursor: 'pointer',
-              bgcolor: activeTab === 'lyrics' ? 'var(--accent-subtle, rgba(250,45,72,0.12))' : 'transparent',
-              color:
-                activeTab === 'lyrics'
-                  ? 'var(--accent-default, #FA2D48)'
-                  : 'text.secondary',
-              transition: 'background-color 150ms ease, color 150ms ease',
+              bgcolor: activeTab === 'lyrics' ? accent : 'transparent',
+              color: activeTab === 'lyrics' ? '#FFF' : 'text.secondary',
+              transition: 'all 150ms ease',
+              whiteSpace: 'nowrap',
+              lineHeight: 1,
+              '&:hover': { bgcolor: activeTab === 'lyrics' ? accent : 'rgba(255,255,255,0.05)' },
             }}
           >
-            <TextFieldsRoundedIcon sx={{ fontSize: 14 }} />
-            <Typography sx={{ fontSize: 12, fontWeight: 600 }}>Lyrics</Typography>
+            <TextFieldsRoundedIcon sx={{ fontSize: 13 }} />
+            <Typography sx={{ fontSize: 11, fontWeight: 700, letterSpacing: '0.02em', lineHeight: 1 }}>Lyrics</Typography>
           </Box>
         </Box>
       </Box>
@@ -207,34 +210,32 @@ export const NowPlaying = ({
           <CoverArtImage
             src={currentTrack?.cover_art_data_url}
             size={200}
-            borderRadius="20px"
+            borderRadius="18px"
             shadow
           />
 
-          <Box sx={{ textAlign: 'center', mb: 'var(--space-5)', width: '100%', mt: 'var(--space-4)' }}>
+          <Box sx={{ textAlign: 'center', width: '100%', mt: 4, mb: 4 }}>
             <Typography
               sx={{
                 fontSize: 17,
                 fontWeight: 700,
-                mb: 'var(--space-1)',
-                letterSpacing: '-0.01em',
+                letterSpacing: '-0.02em',
+                mb: 0.5,
+                lineHeight: 1.3,
               }}
               noWrap
             >
               {currentTrack?.title || 'No track'}
             </Typography>
-            <Typography
-              sx={{ fontSize: 13, color: 'text.secondary', mb: '2px' }}
-              noWrap
-            >
+            <Typography sx={{ fontSize: 13, color: 'text.secondary', mb: 0.25, lineHeight: 1.4 }} noWrap>
               {currentTrack?.artist || 'Unknown Artist'}
             </Typography>
-            <Typography sx={{ fontSize: 12, color: 'text.secondary', opacity: 0.8 }} noWrap>
+            <Typography sx={{ fontSize: 12, color: 'text.secondary', opacity: 0.7, lineHeight: 1.3 }} noWrap>
               {currentTrack?.album || 'Unknown Album'}
             </Typography>
           </Box>
 
-          <Box sx={{ width: '100%', mb: 'var(--space-4)' }}>
+          <Box sx={{ width: '100%', mb: 4 }}>
             <Slider
               size="small"
               value={isSeeking ? localSeekPos : durationMs ? clampedPos : 0}
@@ -245,38 +246,37 @@ export const NowPlaying = ({
               valueLabelDisplay="auto"
               valueLabelFormat={(val) => formatDuration(val)}
               sx={{
-                color: vinyl.adwBlue,
+                color: accent,
                 height: 4,
-                padding: 0,
+                padding: '8px 0',
                 '& .MuiSlider-thumb': {
                   width: 14,
                   height: 14,
                   backgroundColor: '#FFFFFF',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.24)',
+                  boxShadow: '0 1px 4px rgba(0,0,0,0.3)',
                   transition: 'transform 150ms ease',
                   '&:hover, &.Mui-focusVisible': {
                     transform: 'scale(1.25)',
-                    boxShadow: `0 0 0 8px ${isDark ? 'rgba(255,255,255,0.18)' : 'rgba(0,0,0,0.12)'}`,
                   },
                 },
                 '& .MuiSlider-track': { border: 'none' },
                 '& .MuiSlider-rail': {
-                  opacity: 0.18,
+                  opacity: 0.2,
                   backgroundColor: theme.palette.text.primary,
                 },
               }}
             />
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: '2px' }}>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 11 }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 11, fontWeight: 500 }}>
                 {formatDuration(isSeeking ? localSeekPos : clampedPos)}
               </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 11 }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 11, fontWeight: 500 }}>
                 {formatDuration(durationMs)}
               </Typography>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, mb: 'var(--space-4)' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, mb: 5 }}>
             <IconButton
               onClick={onPrevious}
               aria-label="Previous track"
@@ -293,17 +293,18 @@ export const NowPlaying = ({
               onClick={onTogglePlayback}
               aria-label={isPlaying ? 'Pause' : 'Play'}
               sx={{
-                bgcolor: vinyl.adwBlue,
+                bgcolor: accent,
                 color: '#FFFFFF',
-                width: 52,
-                height: 52,
-                '&:hover': { bgcolor: vinyl.adwBlue, opacity: 0.92 },
-                boxShadow: `0 0 0 8px ${isDark ? 'rgba(250,45,72,0.25)' : 'rgba(250,45,72,0.18)'}`,
-                transition: 'transform 120ms cubic-bezier(0.25, 0.1, 0.25, 1)',
-                '&:active': { transform: 'scale(0.96)' },
+                width: 56,
+                height: 56,
+                borderRadius: '16px',
+                '&:hover': { bgcolor: accent, opacity: 0.92 },
+                boxShadow: `0 6px 20px ${accent}66`,
+                transition: 'all 150ms cubic-bezier(0.25, 0.1, 0.25, 1)',
+                '&:active': { transform: 'scale(0.94)' },
               }}
             >
-              {isPlaying ? <PauseRoundedIcon sx={{ fontSize: 30 }} /> : <PlayArrowRoundedIcon sx={{ fontSize: 30 }} />}
+              {isPlaying ? <PauseRoundedIcon sx={{ fontSize: 28 }} /> : <PlayArrowRoundedIcon sx={{ fontSize: 28 }} />}
             </IconButton>
             <IconButton
               onClick={onNext}
@@ -319,17 +320,26 @@ export const NowPlaying = ({
             </IconButton>
           </Box>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', width: '100%', px: 'var(--space-4)' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 2,
+              width: '100%',
+              px: 4,
+            }}
+          >
             <IconButton
               size="small"
               onClick={onToggleShuffle}
               aria-label={shuffleEnabled ? 'Disable shuffle' : 'Enable shuffle'}
               aria-pressed={shuffleEnabled}
               sx={{
-                color: shuffleEnabled ? vinyl.adwBlue : 'text.secondary',
-                width: 32,
-                height: 32,
-                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+                color: shuffleEnabled ? accent : 'text.secondary',
+                width: 36,
+                height: 36,
+                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
               }}
             >
               <ShuffleRoundedIcon sx={{ fontSize: 18 }} />
@@ -340,9 +350,9 @@ export const NowPlaying = ({
                 size="small"
                 aria-label={volume === 0 ? 'Unmute' : 'Mute'}
                 onClick={() => onVolumeChange(volume === 0 ? 0.5 : 0)}
-                sx={{ p: 0, width: 28, height: 28 }}
+                sx={{ p: 0, width: 30, height: 30, color: 'text.secondary' }}
               >
-                <VolumeUpRoundedIcon sx={{ fontSize: 16, color: 'text.secondary' }} />
+                <VolumeUpRoundedIcon sx={{ fontSize: 16 }} />
               </IconButton>
               <Slider
                 size="small"
@@ -353,17 +363,17 @@ export const NowPlaying = ({
                 aria-label="Volume"
                 onChange={(_, val) => onVolumeChange(val as number)}
                 sx={{
-                  color: vinyl.adwBlue,
+                  color: accent,
                   height: 4,
-                  padding: 0,
+                  padding: '4px 0',
                   '& .MuiSlider-thumb': {
                     width: 12,
                     height: 12,
                     backgroundColor: '#FFFFFF',
-                    border: `1px solid ${isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.1)'}`,
+                    boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
                   },
                   '& .MuiSlider-track': { border: 'none' },
-                  '& .MuiSlider-rail': { opacity: 0.2, backgroundColor: theme.palette.text.primary },
+                  '& .MuiSlider-rail': { opacity: 0.18, backgroundColor: theme.palette.text.primary },
                 }}
               />
             </Box>
@@ -374,10 +384,10 @@ export const NowPlaying = ({
               aria-label={repeatMode === 'off' ? 'Enable repeat all' : repeatMode === 'all' ? 'Enable repeat one' : 'Disable repeat'}
               aria-pressed={repeatMode !== 'off'}
               sx={{
-                color: repeatMode !== 'off' ? vinyl.adwBlue : 'text.secondary',
-                width: 32,
-                height: 32,
-                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)' },
+                color: repeatMode !== 'off' ? accent : 'text.secondary',
+                width: 36,
+                height: 36,
+                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)' },
               }}
             >
               {repeatMode === 'one' ? <RepeatOneRoundedIcon sx={{ fontSize: 18 }} /> : <RepeatRoundedIcon sx={{ fontSize: 18 }} />}
@@ -390,25 +400,25 @@ export const NowPlaying = ({
             sx={{
               display: 'flex',
               alignItems: 'center',
-              gap: 'var(--space-2)',
-              px: 'var(--space-2)',
-              py: 'var(--space-2)',
-              mb: 'var(--space-3)',
+              gap: 1,
+              px: 3,
+              py: 2,
+              mb: 2,
             }}
           >
-            <CoverArtImage src={currentTrack?.cover_art_data_url} size={40} borderRadius="8px" padding={0.5} />
-            <Box sx={{ flexGrow: 1, overflow: 'hidden' }}>
-              <Typography sx={{ fontSize: 14, fontWeight: 700 }} noWrap>
+            <CoverArtImage src={currentTrack?.cover_art_data_url} size={44} borderRadius="10px" padding={0.5} />
+            <Box sx={{ flexGrow: 1, overflow: 'hidden', minWidth: 0 }}>
+              <Typography sx={{ fontSize: 15, fontWeight: 700 }} noWrap>
                 {currentTrack?.title}
               </Typography>
               <Typography sx={{ fontSize: 12, color: 'text.secondary' }} noWrap>
                 {currentTrack?.artist}
               </Typography>
             </Box>
-            <IconButton size="small" onClick={onTogglePlayback} sx={{ width: 28, height: 28 }}>
+            <IconButton size="small" onClick={onTogglePlayback} sx={{ width: 32, height: 32 }}>
               {isPlaying ? <PauseRoundedIcon sx={{ fontSize: 18 }} /> : <PlayArrowRoundedIcon sx={{ fontSize: 18 }} />}
             </IconButton>
-            <IconButton size="small" onClick={onNext} sx={{ width: 28, height: 28 }}>
+            <IconButton size="small" onClick={onNext} sx={{ width: 32, height: 32 }}>
               <SkipNextRoundedIcon sx={{ fontSize: 18 }} />
             </IconButton>
             <IconButton
@@ -430,7 +440,7 @@ export const NowPlaying = ({
                   }
                 }
               }}
-              sx={{ color: vinyl.adwBlue, width: 28, height: 28 }}
+              sx={{ color: accent, width: 32, height: 32 }}
             >
               <CloudDownloadRoundedIcon sx={{ fontSize: 18 }} />
             </IconButton>
@@ -440,8 +450,8 @@ export const NowPlaying = ({
             sx={{
               flexGrow: 1,
               overflowY: 'auto',
-              px: 'var(--space-3)',
-              pb: 'var(--space-6)',
+              px: 4,
+              pb: 5,
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
@@ -456,20 +466,20 @@ export const NowPlaying = ({
                   }}
                   onClick={() => onSeek(line.timestamp_ms)}
                   sx={{
-                    fontSize: 15,
+                    fontSize: 16,
                     fontWeight: 600,
                     lineHeight: 1.9,
                     textAlign: 'center',
                     cursor: 'pointer',
-                    py: '6px',
+                    py: 0.75,
                     width: '100%',
-                    borderRadius: 'var(--radius-md)',
-                    color: activeLyricIndex === i ? 'var(--accent-default, #FA2D48)' : 'text.primary',
-                    opacity: activeLyricIndex === i ? 1 : 0.55,
+                    borderRadius: 1,
+                    color: activeLyricIndex === i ? accent : 'text.primary',
+                    opacity: activeLyricIndex === i ? 1 : 0.45,
                     transition: 'all 280ms ease',
                     '&:hover': {
                       opacity: 1,
-                      bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+                      bgcolor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.03)',
                     },
                   }}
                 >

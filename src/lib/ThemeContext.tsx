@@ -13,6 +13,8 @@ interface ThemeContextValue {
   reducedMotion: boolean;
   colors: ReturnType<typeof getColors>;
   resolvedMode: ThemeMode;
+  dynamicColor: string | null;
+  setDynamicColor: (c: string | null) => void;
 }
 
 const ThemeContext = createContext<ThemeContextValue>({
@@ -25,6 +27,8 @@ const ThemeContext = createContext<ThemeContextValue>({
   reducedMotion: false,
   colors: getColors('dark'),
   resolvedMode: 'dark',
+  dynamicColor: null,
+  setDynamicColor: () => {},
 });
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -43,6 +47,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       return '#FA2D48';
     }
   });
+
+  const [dynamicColor, setDynamicColorState] = useState<string | null>(null);
 
   const resolvedMode = useMemo<ThemeMode>(() => {
     if (theme === 'system') {
@@ -76,6 +82,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [accentColor]);
 
   useEffect(() => {
+    if (dynamicColor) {
+      document.documentElement.style.setProperty('--adw-dynamic', dynamicColor);
+    } else {
+      document.documentElement.style.removeProperty('--adw-dynamic');
+    }
+  }, [dynamicColor]);
+
+  useEffect(() => {
     const applyTheme = (t: Theme) => {
       const isDark =
         t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
@@ -107,6 +121,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     reducedMotion,
     colors,
     resolvedMode,
+    dynamicColor,
+    setDynamicColor: setDynamicColorState,
   };
 
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
