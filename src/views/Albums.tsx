@@ -1,4 +1,4 @@
-import { Box, Typography, Avatar, IconButton } from '@mui/material';
+import { Box, Typography, IconButton } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { Album, Track } from '../types/library';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
@@ -29,26 +29,45 @@ const AlbumDetailsInternal = ({ album, tracks, onBack, onPlayTrack }: AlbumDetai
 
   return (
     <Box sx={{ width: '100%', pb: 10, display: 'flex', flexDirection: 'column' }}>
-      <Box sx={{ display: 'flex', gap: 4, p: 4, alignItems: 'flex-start' }}>
-        <IconButton onClick={onBack} sx={{ color: theme.palette.text.primary }}>
+      <Box sx={{ display: 'flex', gap: 3, p: 4, alignItems: 'flex-start' }}>
+        <IconButton
+          onClick={onBack}
+          sx={{
+            color: 'text.primary',
+            bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+            '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)' },
+          }}
+        >
           <ArrowBackRoundedIcon sx={{ fontSize: 20 }} />
         </IconButton>
-        <Avatar
-          variant="square"
-          src={album.cover_art_data_url || "/src/assets/logo.png"}
+        <Box
           sx={{
             width: 200,
             height: 200,
-            borderRadius: '12px',
-            bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+            borderRadius: '14px',
+            overflow: 'hidden',
             flexShrink: 0,
-            '& img': { objectFit: album.cover_art_data_url ? 'cover' : 'contain', p: album.cover_art_data_url ? 0 : 4 }
+            boxShadow: '0 8px 30px rgba(0,0,0,0.18)',
+            bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
           }}
-        />
-        <Box sx={{ display: 'flex', flexDirection: 'column', pt: 2 }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 20, mb: 1 }}>{album.title}</Typography>
-          <Typography sx={{ fontWeight: 400, fontSize: 14, color: theme.palette.text.secondary, mb: 0.5 }}>{album.artist}</Typography>
-          <Typography sx={{ fontWeight: 400, fontSize: 12, color: theme.palette.text.secondary }}>
+        >
+          <Box
+            component="img"
+            src={album.cover_art_data_url || '/src/assets/logo.png'}
+            alt={album.title}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: album.cover_art_data_url ? 'cover' : 'contain',
+              p: album.cover_art_data_url ? 0 : 8,
+              display: 'block',
+            }}
+          />
+        </Box>
+        <Box sx={{ display: 'flex', flexDirection: 'column', pt: 1, minWidth: 0 }}>
+          <Typography sx={{ fontWeight: 800, fontSize: 22, letterSpacing: '-0.01em', mb: 1 }}>{album.title}</Typography>
+          <Typography sx={{ fontWeight: 500, fontSize: 14, color: 'text.secondary', mb: 0.5 }}>{album.artist}</Typography>
+          <Typography sx={{ fontWeight: 400, fontSize: 12, color: 'text.secondary' }}>
             {albumTracks.length} tracks • {album.year || 'Unknown year'}
           </Typography>
         </Box>
@@ -65,26 +84,48 @@ const AlbumDetailsInternal = ({ album, tracks, onBack, onPlayTrack }: AlbumDetai
               pr: 2,
               borderRadius: `${vinyl.radius.row}px`,
               cursor: 'pointer',
-              transition: 'background-color 200ms',
+              transition: 'background-color 150ms',
               '&:hover': {
-                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                '& .more-btn': { opacity: 1 }
+                bgcolor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
+                '& .more-btn': { opacity: 1 },
               },
               height: 52,
               gap: 2,
             }}
           >
-            <Typography sx={{ width: 30, textAlign: 'center', color: theme.palette.text.secondary, fontSize: 13, fontWeight: 500 }}>
+            <Typography
+              sx={{
+                width: 30,
+                textAlign: 'center',
+                color: 'text.secondary',
+                fontSize: 13,
+                fontWeight: 500,
+              }}
+            >
               {index + 1}
             </Typography>
             <Box sx={{ flexGrow: 1, minWidth: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-              <Typography sx={{ fontWeight: 600, fontSize: 14 }} noWrap>{track.title}</Typography>
-              <Typography sx={{ fontWeight: 400, fontSize: 12, color: theme.palette.text.secondary }} noWrap>{track.artist}</Typography>
+              <Typography sx={{ fontWeight: 600, fontSize: 14 }} noWrap>
+                {track.title}
+              </Typography>
+              <Typography sx={{ fontWeight: 400, fontSize: 12, color: 'text.secondary' }} noWrap>
+                {track.artist}
+              </Typography>
             </Box>
-            <IconButton className="more-btn" size="small" onClick={(e) => e.stopPropagation()} sx={{ opacity: 0, transition: 'opacity 200ms', color: theme.palette.text.secondary }}>
+            <IconButton
+              className="more-btn"
+              size="small"
+              onClick={(e) => e.stopPropagation()}
+              sx={{
+                opacity: 0,
+                transition: 'opacity 150ms',
+                color: 'text.secondary',
+                '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+              }}
+            >
               <MoreVertRoundedIcon sx={{ fontSize: 18 }} />
             </IconButton>
-            <Typography sx={{ color: theme.palette.text.secondary, fontSize: 12, minWidth: 40, textAlign: 'right' }}>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12, minWidth: 40, textAlign: 'right' }}>
               {formatDuration(track.duration)}
             </Typography>
           </Box>
@@ -108,36 +149,46 @@ export const Albums = ({ albums, detailId, tracks, onSelectAlbum, onBack, onPlay
   const isDark = theme.palette.mode === 'dark';
   const [sortOption, setSortOption] = useSort('athu_sort_albums');
 
-  const detailAlbum = useMemo(() => 
-    detailId ? albums.find(a => a.id === detailId) : null
-  , [detailId, albums]);
+  const detailAlbum = useMemo(() => (detailId ? albums.find((a) => a.id === detailId) : null), [detailId, albums]);
 
   const sortedAlbums = useMemo(() => sortItems(albums, sortOption), [albums, sortOption]);
 
   if (detailAlbum) {
     return (
-      <AlbumDetailsInternal 
-        album={detailAlbum} 
-        tracks={tracks} 
-        onBack={onBack} 
-        onPlayTrack={onPlayTrack} 
-      />
+      <AlbumDetailsInternal album={detailAlbum} tracks={tracks} onBack={onBack} onPlayTrack={onPlayTrack} />
     );
   }
 
   return (
     <Box sx={{ width: '100%', pb: 10 }}>
-      {/* Header & Sort */}
-      <Box sx={{ px: 4, pt: 3, pb: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '0.05em', textTransform: 'uppercase', fontSize: 11 }}>
+      <Box
+        sx={{
+          px: 4,
+          pt: 3,
+          pb: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexShrink: 0,
+        }}
+      >
+        <Typography
+          sx={{
+            color: 'text.secondary',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            fontSize: 11,
+          }}
+        >
           All Albums • {albums.length}
         </Typography>
         <LibrarySort value={sortOption} onChange={setSortOption} />
       </Box>
 
-      <Box 
-        sx={{ 
-          width: '100%', 
+      <Box
+        sx={{
+          width: '100%',
           p: '20px',
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
@@ -153,26 +204,40 @@ export const Albums = ({ albums, detailId, tracks, onSelectAlbum, onBack, onPlay
               flexDirection: 'column',
               cursor: 'pointer',
               transition: 'transform 200ms ease',
-              '&:hover': {
-                transform: 'scale(1.03)',
-              }
+              '&:hover': { transform: 'scale(1.02)' },
             }}
           >
-            <Avatar
-              variant="square"
-              src={album.cover_art_data_url || "/src/assets/logo.png"}
+            <Box
               sx={{
                 width: '100%',
-                height: 'auto',
                 aspectRatio: '1 / 1',
-                borderRadius: '10px',
-                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                borderRadius: '12px',
+                overflow: 'hidden',
                 mb: 1.5,
-                '& img': { objectFit: album.cover_art_data_url ? 'cover' : 'contain', p: album.cover_art_data_url ? 0 : 2 }
+                bgcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+                position: 'relative',
               }}
-            />
-            <Typography sx={{ fontWeight: 700, fontSize: 13, lineHeight: 1.2, mb: 0.5 }} noWrap>{album.title}</Typography>
-            <Typography sx={{ fontWeight: 400, fontSize: 11, color: theme.palette.text.secondary }} noWrap>{album.artist}</Typography>
+            >
+              <Box
+                component="img"
+                src={album.cover_art_data_url || '/src/assets/logo.png'}
+                alt={album.title}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: album.cover_art_data_url ? 'cover' : 'contain',
+                  p: album.cover_art_data_url ? 0 : 6,
+                  display: 'block',
+                }}
+              />
+            </Box>
+            <Typography sx={{ fontWeight: 700, fontSize: 13, lineHeight: 1.25, mb: 0.5 }} noWrap>
+              {album.title}
+            </Typography>
+            <Typography sx={{ fontWeight: 400, fontSize: 11, color: 'text.secondary', lineHeight: 1.3 }} noWrap>
+              {album.artist}
+            </Typography>
           </Box>
         ))}
       </Box>
