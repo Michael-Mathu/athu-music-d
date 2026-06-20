@@ -360,11 +360,8 @@ export const NowPlaying = ({
 
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', px: 4 }}>
             <IconButton
-              onClick={() => setActiveTab(activeTab === 'lyrics' ? 'player' : 'lyrics')}
-              sx={{ 
-                color: activeTab === 'lyrics' ? accent : 'text.secondary',
-                bgcolor: activeTab === 'lyrics' ? (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.05)') : 'transparent',
-              }}
+              onClick={() => setActiveTab('lyrics')}
+              sx={{ color: 'text.secondary' }}
             >
               <ChatBubbleRoundedIcon sx={{ fontSize: 22 }} />
             </IconButton>
