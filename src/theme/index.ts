@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import { darkColors, lightColors, type ThemeMode } from './tokens';
 
 declare module '@mui/material/styles' {
   interface Theme {
@@ -29,41 +30,40 @@ declare module '@mui/material/styles' {
   }
 }
 
-export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
-  const isDark = mode === 'dark';
+export const getAppTheme = (mode: ThemeMode, accent: string) => {
+  const palette = mode === 'dark' ? darkColors : lightColors;
+
   return createTheme({
     palette: {
       mode,
       primary: {
-        main: accent ?? '#3584E4',
+        main: accent,
         contrastText: '#ffffff',
       },
       background: {
-        default: isDark ? '#242424' : '#FAFAFA',
-        paper: isDark ? '#2A2A2A' : '#FFFFFF',
+        default: palette.bgBase,
+        paper: palette.bgElevated,
       },
       text: {
-        primary: isDark ? '#ffffff' : '#1A1A1A',
-        secondary: isDark ? '#8E8E93' : '#5A5A5A',
-        disabled: isDark ? '#8E8E93' : '#A0A0A0',
+        primary: palette.textPrimary,
+        secondary: palette.textSecondary,
+        disabled: palette.textTertiary,
       },
-      divider: isDark
-        ? 'rgba(255,255,255,0.08)'
-        : 'rgba(0,0,0,0.08)',
+      divider: palette.borderSubtle,
     },
     shape: {
       borderRadius: 8,
     },
     vinyl: {
       adwBlue: accent,
-      panelLeft: isDark ? '#242424' : '#FFFFFF',
-      panelRight: isDark ? '#2A2A2A' : '#FAFAFA',
-      trackActive: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.07)',
+      panelLeft: palette.bgElevated,
+      panelRight: palette.bgSurface,
+      trackActive: palette.borderMedium,
       radius: {
         art: 12,
         row: 4,
         window: 12,
-      }
+      },
     },
     typography: {
       fontFamily: "'SF Pro', 'Inter', 'Roboto Serif', serif",
@@ -85,37 +85,36 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
             color: 'inherit',
           },
           secondary: {
-            color: isDark ? '#8E8E93' : '#5A5A5A',
+            color: palette.textSecondary,
           },
         },
       },
       MuiCssBaseline: {
         styleOverrides: {
           body: {
-            color: isDark ? '#ffffff' : '#1A1A1A',
-            backgroundColor: isDark ? '#242424' : '#FAFAFA',
+            color: palette.textPrimary,
+            backgroundColor: palette.bgBase,
             fontFamily: "'SF Pro', 'Inter', 'Roboto Serif', serif",
             margin: 0,
             overflow: 'hidden',
           },
-          /* Global Scrollbar Styling */
           '::-webkit-scrollbar': {
             width: '8px',
             height: '8px',
           },
           '::-webkit-scrollbar-track': {
-            background: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)',
+            background: palette.borderSubtle,
           },
           '::-webkit-scrollbar-thumb': {
-            background: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+            background: palette.borderMedium,
             borderRadius: '10px',
             '&:hover': {
-              background: accent, // Use accent color on hover for better visibility
+              background: accent,
             },
           },
           '*': {
             scrollbarWidth: 'thin',
-            scrollbarColor: `${isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} transparent`,
+            scrollbarColor: `${palette.borderMedium} transparent`,
           },
         },
       },
@@ -131,15 +130,15 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
             height: 12,
             backgroundColor: '#ffffff',
             boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-            '&:hover, &.Mui-focusVisible': { boxShadow: '0 0 0 8px rgba(53, 132, 228, 0.16)' },
+            '&:hover, &.Mui-focusVisible': { boxShadow: `0 0 0 8px ${palette.accentGlow}` },
           },
           track: { borderRadius: 2 },
-          rail: { backgroundColor: isDark ? '#444444' : '#CCCCCC', opacity: 1 },
+          rail: { backgroundColor: palette.borderMedium, opacity: 1 },
         },
       },
       MuiIconButton: {
         styleOverrides: {
-          root: { 
+          root: {
             borderRadius: 6,
             color: 'inherit',
           },
@@ -148,10 +147,10 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
       MuiMenu: {
         styleOverrides: {
           paper: {
-            background: isDark ? '#2A2A2A' : '#FFFFFF',
-            borderRadius: 8,
-            border: isDark ? '0.5px solid rgba(255,255,255,0.1)' : '0.5px solid rgba(0,0,0,0.1)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            background: palette.bgElevated,
+            borderRadius: 10,
+            border: `0.5px solid ${palette.borderSubtle}`,
+            boxShadow: '0 8px 32px rgba(0,0,0,0.14)',
           },
         },
       },
@@ -159,8 +158,8 @@ export const getAppTheme = (mode: 'light' | 'dark', accent: string) => {
         styleOverrides: {
           root: {
             fontSize: 13,
-            color: isDark ? '#ffffff' : '#1A1A1A',
-            '&:hover': { background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)' },
+            color: palette.textPrimary,
+            '&:hover': { background: palette.borderMedium },
           },
         },
       },

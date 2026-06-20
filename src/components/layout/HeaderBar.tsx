@@ -1,13 +1,12 @@
-import { Box, IconButton, Tooltip } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-
+import { Window } from '@tauri-apps/api/window';
+import { NavView } from '../../types/library';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import MinimizeRoundedIcon from '@mui/icons-material/MinimizeRounded';
 import CropSquareRoundedIcon from '@mui/icons-material/CropSquareRounded';
-import { Window } from '@tauri-apps/api/window';
-import { NavView } from '../../types/library';
 
 const appWindow = new Window('main');
 
@@ -18,6 +17,7 @@ interface HeaderBarProps {
 
 export const HeaderBar = ({ onNavigate, onToggleSearch }: HeaderBarProps) => {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
 
   const handleClose = async () => {
     try {
@@ -52,36 +52,55 @@ export const HeaderBar = ({ onNavigate, onToggleSearch }: HeaderBarProps) => {
     <Box
       data-tauri-drag-region
       sx={{
+        position: 'relative',
         height: 48,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
         px: 1,
-        borderBottom: `0.5px solid ${theme.palette.divider}`,
-        backgroundColor: 'transparent',
         flexShrink: 0,
+        bgcolor: isDark ? 'rgba(26, 26, 29, 0.72)' : 'rgba(255, 255, 255, 0.72)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '0.5px solid',
+        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
       }}
     >
-      {/* Left spacer */}
       <Box sx={{ display: 'flex', gap: 0.5, pointerEvents: 'none', width: 80 }} />
-
-      {/* Center: Logo */}
-      <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', pointerEvents: 'none' }}>
-        <img 
-          src="/src/assets/logo.png" 
-          alt="Athu Music Logo" 
-          style={{ height: '24px', objectFit: 'contain' }} 
-        />
+      <Box sx={{ display: 'flex', alignItems: 'center', height: '100%', pointerEvents: 'none', gap: 1 }}>
+        <Box
+          sx={{
+            width: 22,
+            height: 22,
+            borderRadius: '6px',
+            bgcolor: 'primary.main',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#FFFFFF',
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: '-0.02em',
+          }}
+        >
+          A
+        </Box>
+        <Typography sx={{ fontSize: 14, fontWeight: 700, letterSpacing: '-0.01em', color: 'text.primary' }}>
+          Athu Music
+        </Typography>
       </Box>
-
-      {/* Right: Actions + Window controls */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
         <Tooltip title="Lyrics Editor" placement="bottom">
-          <IconButton 
-            size="small" 
+          <IconButton
+            size="small"
             aria-label="Open lyrics editor"
             onClick={() => onNavigate('lyrics-editor')}
-            sx={{ color: theme.palette.text.secondary, '& svg': { fontSize: 20 } }}
+            sx={{
+              color: 'text.secondary',
+              borderRadius: '6px',
+              '& svg': { fontSize: 18 },
+              '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+            }}
           >
             <EditNoteRoundedIcon />
           </IconButton>
@@ -91,17 +110,30 @@ export const HeaderBar = ({ onNavigate, onToggleSearch }: HeaderBarProps) => {
             size="small"
             aria-label="Search library"
             onClick={onToggleSearch}
-            sx={{ color: theme.palette.text.secondary, '& svg': { fontSize: 20 } }}
+            sx={{
+              color: 'text.secondary',
+              borderRadius: '6px',
+              '& svg': { fontSize: 18 },
+              '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+            }}
           >
             <SearchRoundedIcon />
           </IconButton>
         </Tooltip>
+        <Box sx={{ width: 1, height: 14, bgcolor: 'divider', mx: 0.5 }} />
         <Tooltip title="Minimize" placement="bottom">
           <IconButton
             size="small"
             aria-label="Minimize window"
             onClick={handleMinimize}
-            sx={{ color: theme.palette.text.secondary, '& svg': { fontSize: 20 } }}
+            sx={{
+              color: 'text.secondary',
+              borderRadius: '6px',
+              width: 28,
+              height: 28,
+              '& svg': { fontSize: 16 },
+              '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+            }}
           >
             <MinimizeRoundedIcon />
           </IconButton>
@@ -111,7 +143,14 @@ export const HeaderBar = ({ onNavigate, onToggleSearch }: HeaderBarProps) => {
             size="small"
             aria-label="Maximize window"
             onClick={handleMaximize}
-            sx={{ color: theme.palette.text.secondary, '& svg': { fontSize: 20 } }}
+            sx={{
+              color: 'text.secondary',
+              borderRadius: '6px',
+              width: 28,
+              height: 28,
+              '& svg': { fontSize: 16 },
+              '&:hover': { bgcolor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)' },
+            }}
           >
             <CropSquareRoundedIcon />
           </IconButton>
@@ -122,8 +161,11 @@ export const HeaderBar = ({ onNavigate, onToggleSearch }: HeaderBarProps) => {
             aria-label="Close window"
             onClick={handleClose}
             sx={{
-              color: theme.palette.text.secondary,
-              '& svg': { fontSize: 20 },
+              color: 'text.secondary',
+              borderRadius: '6px',
+              width: 28,
+              height: 28,
+              '& svg': { fontSize: 16 },
               '&:hover': { color: '#E05C5C', bgcolor: 'rgba(224,92,92,0.1)' },
             }}
           >

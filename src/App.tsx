@@ -29,13 +29,12 @@ function AppContent() {
   }, [appTheme]);
 
   const muiTheme = useMemo(
-    () => getAppTheme(resolvedMode, accentColor ?? '#3584E4'),
+    () => getAppTheme(resolvedMode, accentColor),
     [resolvedMode, accentColor]
   );
 
   const vinyl = muiTheme.vinyl;
 
-  // ── Library ──────────────────────────────────────────────────────────────
   const {
     tracks,
     albums,
@@ -50,7 +49,6 @@ function AppContent() {
     scanFolder,
   } = useLibrary();
 
-  // ── Playback ──────────────────────────────────────────────────────────────
   const {
     currentTrack,
     isPlaying,
@@ -70,7 +68,6 @@ function AppContent() {
     refreshLyrics,
   } = usePlayback({ tracks, loadLibrary });
 
-  // ── Navigation ────────────────────────────────────────────────────────────
   const [navState, setNavState] = useState({
     view: 'queue' as NavView,
     detail: null as string | number | null,
@@ -102,18 +99,18 @@ function AppContent() {
   const renderRightPanelContent = () => {
     if (navState.view === 'queue') {
       return (
-        <Queue 
-          tracks={queueTrackIds.map((id) => tracks.find((t) => t.id === id)).filter((t): t is typeof tracks[0] => t !== undefined)} 
-          currentTrackId={currentTrack?.id ?? undefined}
-          onPlayTrack={(id) => void handlePlayTrack(id)} 
+        <Queue
+          tracks={queueTrackIds.map((id) => tracks.find((t) => t.id === id)).filter((t): t is typeof tracks[0] => t !== undefined)}
+          currentTrackId={currentTrack?.id}
+          onPlayTrack={(id) => void handlePlayTrack(id)}
         />
       );
     }
     if (navState.view === 'tracks') {
       return (
-        <Tracks 
+        <Tracks
           tracks={tracks}
-          currentTrackId={currentTrack?.id ?? undefined}
+          currentTrackId={currentTrack?.id}
           onPlayTrack={(id) => void handlePlayTrack(id)}
           onScanLocalFiles={async (path) => {
             try { await scanFolder(path); }
@@ -126,11 +123,11 @@ function AppContent() {
     }
     if (navState.view === 'albums') {
       return (
-        <Albums 
-          albums={albums} 
+        <Albums
+          albums={albums}
           detailId={navState.detail as number | null}
           tracks={tracks}
-          onSelectAlbum={(id) => setNavState({ ...navState, view: 'albums', detail: id, scrollY: rightPanelRef.current?.scrollTop || 0 })} 
+          onSelectAlbum={(id) => setNavState({ ...navState, view: 'albums', detail: id, scrollY: rightPanelRef.current?.scrollTop || 0 })}
           onBack={() => {
             const scroll = navState.scrollY;
             setNavState({ ...navState, detail: null });
@@ -144,12 +141,12 @@ function AppContent() {
     }
     if (navState.view === 'artists') {
       return (
-        <Artists 
-          artists={artists} 
+        <Artists
+          artists={artists}
           detailId={navState.detail as number | null}
           albums={albums}
           tracks={tracks}
-          onSelectArtist={(id) => setNavState({ ...navState, view: 'artists', detail: id, scrollY: rightPanelRef.current?.scrollTop || 0 })} 
+          onSelectArtist={(id) => setNavState({ ...navState, view: 'artists', detail: id, scrollY: rightPanelRef.current?.scrollTop || 0 })}
           onBack={() => {
             const scroll = navState.scrollY;
             setNavState({ ...navState, detail: null });
@@ -163,7 +160,7 @@ function AppContent() {
     }
     if (navState.view === 'playlists') {
       return (
-        <Playlists 
+        <Playlists
           playlists={playlists}
           playlistTracks={playlistTracks}
           currentTrack={currentTrack}
@@ -187,7 +184,7 @@ function AppContent() {
     }
     if (navState.view === 'lyrics-editor') {
       return (
-        <LyricsEditor 
+        <LyricsEditor
           currentTrack={currentTrack}
           playbackPosMs={playbackPosMs}
           onBack={() => setNavState((prev) => ({ ...prev, view: prev.previousView ?? 'queue' }))}
@@ -201,24 +198,23 @@ function AppContent() {
   return (
     <MuiThemeProvider theme={muiTheme}>
       <CssBaseline />
-      <Box 
-        sx={{ 
-          display: 'flex', 
-          height: '100vh', 
-          width: '100vw', 
-          overflow: 'hidden', 
+      <Box
+        sx={{
+          display: 'flex',
+          height: '100vh',
+          width: '100vw',
+          overflow: 'hidden',
           borderRadius: `${vinyl?.radius?.window ?? 12}px`,
-          border: '0.5px solid rgba(0,0,0,0.15)',
-          boxShadow: '0 0 20px rgba(0,0,0,0.3)',
+          border: '0.5px solid rgba(255,255,255,0.08)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.28)',
           position: 'relative',
         }}
       >
-        {/* Left Panel: Now Playing / Lyrics */}
-        <Box 
-          sx={{ 
-            width: 320, 
-            flexShrink: 0, 
-            backgroundColor: resolvedMode === 'dark' ? '#242424' : '#FFFFFF',
+        <Box
+          sx={{
+            width: 320,
+            flexShrink: 0,
+            bgcolor: vinyl.panelLeft,
             display: 'flex',
             flexDirection: 'column',
             borderTopLeftRadius: `${vinyl?.radius?.window ?? 12}px`,
@@ -245,11 +241,10 @@ function AppContent() {
           />
         </Box>
 
-        {/* Right Panel */}
-        <Box 
-          sx={{ 
-            flexGrow: 1, 
-            backgroundColor: resolvedMode === 'dark' ? '#2A2A2A' : '#F5F5F5',
+        <Box
+          sx={{
+            flexGrow: 1,
+            bgcolor: vinyl.panelRight,
             display: 'flex',
             flexDirection: 'column',
             borderTopRightRadius: `${vinyl?.radius?.window ?? 12}px`,
@@ -258,16 +253,16 @@ function AppContent() {
             overflow: 'hidden',
           }}
         >
-          <HeaderBar 
+          <HeaderBar
             onNavigate={(view) => setNavState((prev) => ({ ...prev, previousView: prev.view, view }))}
             onToggleSearch={() => setSearchOpen((o) => !o)}
           />
           <NavRail activeView={navState.view} onChange={handleNavChange} />
-          <Box 
+          <Box
             ref={rightPanelRef}
-            sx={{ 
-              flexGrow: 1, 
-              overflowY: 'auto', 
+            sx={{
+              flexGrow: 1,
+              overflowY: 'auto',
               overflowX: 'hidden',
               display: 'flex',
             }}
@@ -275,7 +270,6 @@ function AppContent() {
             {renderRightPanelContent()}
           </Box>
 
-          {/* Search Overlay — positioned inside the right panel */}
           <SearchOverlay
             open={searchOpen}
             onClose={() => setSearchOpen(false)}
