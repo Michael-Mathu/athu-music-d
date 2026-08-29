@@ -1,0 +1,243 @@
+<p align="center">
+  <img src="src/assets/logo.png" alt="Athu Music D Logo" width="160" />
+</p>
+
+<h1 align="center">Athu Music D</h1>
+
+<p align="center">
+  <strong>An ultra-fast, offline-first desktop music player</strong><br />
+  Built with Tauri v2 • Rust • React 19
+</p>
+
+<p align="center">
+  <a href="https://github.com/Michael-Mathu/athu-music-d/releases"><img src="https://img.shields.io/github/v/release/Michael-Mathu/athu-music-d?include_prereleases&style=flat-square&color=%233584E4" alt="Latest Release" /></a>
+  <a href="https://github.com/Michael-Mathu/athu-music-d/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/Michael-Mathu/athu-music-d/releases"><img src="https://img.shields.io/github/downloads/Michael-Mathu/athu-music-d/total?style=flat-square&color=%233584E4" alt="Downloads" /></a>
+  <a href="https://github.com/Michael-Mathu/athu-music-d/actions"><img src="https://img.shields.io/github/actions/workflow/status/Michael-Mathu/athu-music-d/release.yml?style=flat-square" alt="Build Status" /></a>
+  <br />
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux-blue?style=flat-square" alt="Platform Support" />
+  <img src="https://img.shields.io/badge/tauri-v2-FFA131?style=flat-square" alt="Tauri v2" />
+  <img src="https://img.shields.io/badge/react-19-61DAFB?style=flat-square&logo=react" alt="React 19" />
+  <img src="https://img.shields.io/badge/rust-1.77%2B-DEA584?style=flat-square&logo=rust" alt="Rust" />
+</p>
+
+---
+
+## ✦ About
+
+Athu Music D is a high-performance desktop music player that puts your local library first. With a meticulously crafted **Apple Music / Songbird-inspired design**, it features translucent glassmorphism, fluid micro-interactions, and a premium dual-panel layout, delivering a native-feeling experience on **Windows** and **Linux**.
+
+Every pixel has been considered — from the unified token-based spacing and radius scale to the dynamic cover-art radial gradients that subtly illuminate the background. Under the hood, a Rust audio engine (Rodio) and SQLite-backed library ensure instant startup, smooth scrolling, and minimal memory usage.
+
+---
+
+## ✦ Preview
+
+<p align="center">
+  <img src="assets/screenshot-1.png" alt="Athu Music D - Now Playing" width="800" />
+</p>
+
+<p align="center">
+  <img src="assets/screenshot-2.png" alt="Athu Music D - Library View" width="400" />
+  <img src="assets/screenshot-3.png" alt="Athu Music D - Detail View" width="400" />
+</p>
+
+---
+
+## ✦ Key Features
+
+### 🎵 Playback & Lyrics
+- **Dual‑Panel Layout** — Fixed 320 px left panel for Now Playing and synced lyrics; fluid right panel for library browsing.
+- **Interactive Synced Lyrics** — Click any line to **instantly seek** to that position in the song.
+- **Built‑in Lyrics Editor** — Create or fine‑tune LRC files with real‑time timestamp stamping while the track plays.
+- **Automatic Lyrics Download & Embedding** — Fetch synced lyrics from online providers and embed them directly into your audio files (ID3v2 USLT / Vorbis Comments).
+- **Gapless Playback Engine** — Powered by Rust's Rodio for low‑latency, accurate audio.
+
+### 📚 Library Management
+- **Full Hierarchy** — Browse by Tracks, Albums, Artists, and custom Playlists.
+- **Smart Sorting** — Sort any view by **Name (A–Z / Z–A)** or **Date Modified (Newest / Oldest First)**. Preferences persist per view.
+- **Rich Metadata** — Automatic artist biographies, album art, and genre information fetched from multiple online sources (Deezer → TheAudioDB → Last.fm waterfall).
+- **High‑DPI Cover Art Caching** — Rust‑powered thumbnail generation (300×300) keeps library scrolling buttery smooth.
+
+### 🖥️ Desktop Integration
+- **Native Media Controls** — Full MPRIS (Linux) and SMTC (Windows) support. Your music appears in system notifications, lock screens, and the KDE Connect / GNOME overlay.
+- **Global Hotkeys** — Control playback (Play/Pause, Next, Previous) from anywhere in the OS — even when the window is hidden.
+- **System Tray** — Minimise to tray with quick access to playback controls and now‑playing info.
+
+### 🎨 Design & Theming
+- **Apple Music-Inspired Glassmorphism** — Layered, translucent glass panels with `backdrop-filter: blur(40px)`.
+- **Adaptive Light / Dark Mode** — Deep space dark (`#0D0D0F`) or crisp light (`#FBFBFD`), matching your system preference.
+- **Custom Accent Presets** — Choose from 8 curated accents including Songbird Red, Electric Indigo, Lavender, and Teal.
+- **Contextual Glows** — Real-time cover-art dominant color extraction powers subtle radial gradients behind the Now Playing panel.
+- **Fluid Motion & Accessibility** — Spring-physics micro-interactions that gracefully disable if `prefers-reduced-motion` is detected.
+- **SF Pro / Inter Typography** — A clean, modern typeface for a high‑end desktop feel.
+
+---
+
+## ✦ Technology Stack
+
+| Layer          | Technology                                                       |
+|:---------------|:-----------------------------------------------------------------|
+| **Framework**  | [Tauri v2](https://tauri.app/) — Rust backend, webview frontend  |
+| **Frontend**   | [React 19](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) + [Vite](https://vitejs.dev/) |
+| **UI Toolkit** | [MUI v6](https://mui.com/) — customised with Libadwaita tokens  |
+| **Audio**      | [Rodio](https://github.com/RustAudio/rodio) — pure Rust playback |
+| **Metadata**   | [Lofty](https://github.com/Serial-ATA/lofty-rs) — read/write audio tags |
+| **Desktop**    | [souvlaki](https://github.com/Sinono3/souvlaki) — MPRIS & SMTC  |
+| **Shortcuts**  | `tauri-plugin-global-shortcut`                                   |
+| **Images**     | `image` crate — thumbnail generation                            |
+| **Database**   | SQLite (via `rusqlite`)                                         |
+
+---
+
+## ✦ Getting Started
+
+### Prerequisites
+
+| OS       | Requirements                                                                 |
+|:---------|:-----------------------------------------------------------------------------|
+| **Any**  | Node.js **v20+** · Rust toolchain (**1.77+**) · Git                        |
+| **Windows** | [Microsoft C++ Build Tools](https://visualstudio.microsoft.com/downloads/) (MSVC) |
+| **Linux**   | `libadwaita-1-dev` · `webkit2gtk-4.1-dev` · `libayatana-appindicator3-dev` |
+
+### Development
+
+```bash
+# Clone the repository
+git clone https://github.com/Michael-Mathu/athu-music-d.git
+cd athu-music-d
+
+# Install frontend dependencies
+npm install
+
+# Launch in development mode (hot‑reload enabled)
+npm run tauri dev
+```
+
+### Production Build
+
+```bash
+# Build distributable binaries
+npm run tauri build
+
+# Build specific platform bundles (Windows)
+npm run tauri build -- --bundles msi,nsis
+```
+
+Outputs will appear in `src-tauri/target/release/bundle/`.
+
+---
+
+## ✦ Project Architecture
+
+```text
+athu-music-d/
+├── src/                          # React frontend
+│   ├── App.tsx                   # Shell layout, view routing
+│   ├── main.tsx                  # Entry point
+│   ├── assets/                   # Logo, fonts, static images
+│   ├── components/
+│   │   ├── layout/               # HeaderBar, NavRail, Sidebar
+│   │   ├── ErrorBoundary.tsx     # Global error handler
+│   │   └── LibrarySort.tsx       # Sort‑control dropdown
+│   ├── hooks/                    # Custom hooks (useSort, etc.)
+│   ├── lib/
+│   │   ├── ThemeContext.tsx       # Theme mode & accent state
+│   │   └── utils/sorting.ts      # Sorting utilities
+│   ├── theme/
+│   │   └── index.ts              # MUI theme (dark + light tokens)
+│   ├── types/                    # TypeScript type definitions
+│   └── views/
+│       ├── NowPlaying.tsx        # Playback + interactive lyrics
+│       ├── LyricsEditor.tsx       # LRC creation / editing
+│       ├── Tracks.tsx
+│       ├── Albums.tsx
+│       ├── Artists.tsx
+│       ├── Playlists.tsx
+│       └── Settings.tsx
+│
+└── src-tauri/                    # Rust backend
+    ├── Cargo.toml                # Rust dependencies
+    ├── tauri.conf.json           # Tauri configuration
+    ├── capabilities/             # Permission manifests
+    ├── icons/                    # App icons
+    └── src/
+        ├── main.rs               # Tauri entry point & command registration
+        ├── lib.rs                # Core application logic
+        ├── player.rs             # Rodio audio engine
+        ├── database.rs           # SQLite library store
+        ├── metadata.rs           # Tag parsing & online metadata
+        ├── lyrics.rs             # LRC download & embedding
+        ├── mpris_smtc.rs         # Desktop media integration
+        └── thumbnail_cache.rs    # High‑DPI cover art generation
+```
+
+---
+
+## ✦ Design System
+
+Athu Music D features a custom, token-driven design system inspired by Apple Music, meticulously overriding MUI defaults.
+
+| Token     | Value                                                          |
+|:----------|:---------------------------------------------------------------|
+| **Accent**  | Songbird Red (`#FA2D48`) by default — 8 configurable presets     |
+| **Dark BG** | Deep Base (`#0D0D0F`), Elevated (`#1A1A1D`), Surface (`#232327`) |
+| **Light BG**| Frost Base (`#FBFBFD`), Elevated (`#FFFFFF`), Surface (`#F5F5F7`)|
+| **Radii**   | 12 px (window & cards), 8 px (buttons), 6 px (rows)            |
+| **Surfaces**| Frosted Glass (`rgba(28,28,32,0.72)`) with 40px blur             |
+| **Typography**| SF Pro / Inter — refined scaling for Display & Titles            |
+
+For detailed version history, see [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## ✦ Roadmap
+
+What's next for Athu Music D?
+
+- [ ] **Equaliser** — 10‑band parametric EQ with presets
+- [ ] **Gapless / Crossfade Playback** — Seamless transitions
+- [ ] **ReplayGain** — Automatic volume normalisation
+- [ ] **Smart Playlists** — “Recently Added”, “Favourites”, “Most Played”
+- [ ] **Batch Tag Editor** — Multi‑track metadata editing
+- [ ] **Audio Visualiser** — Waveform / frequency‑domain visualisation
+- [ ] **i18n** — Multi‑language UI support
+- [ ] **macOS Support** — Expand platform coverage
+- [ ] **Plugin System** — Extensible architecture for community add‑ons
+
+Have an idea? Open a feature request!
+
+---
+
+## ✦ Contributing
+
+Contributions are warmly welcomed! Whether it's a bug report, feature suggestion, or pull request:
+
+1.  **Fork** the repository
+2.  **Create a branch** (`git checkout -b feat/my-feature`)
+3.  **Commit your changes** (`git commit -m 'Add some feature'`)
+4.  **Push to the branch** (`git push origin feat/my-feature`)
+5.  **Open a Pull Request**
+
+Please check existing issues before starting work, and ensure your code follows the project's TypeScript and Rust formatting conventions.
+
+---
+
+## ✦ License
+
+Athu Music D is released under the **MIT License**. See [LICENSE](LICENSE) for full terms.
+
+---
+
+## ✦ Acknowledgements
+
+- **Tauri** — The next‑gen app framework
+- **Libadwaita / GTK** — Design language inspiration
+- **LRCLIB** — Community synced lyrics database
+- **TheAudioDB** — Artist metadata API
+- **Last.fm** — Artist biographies & images
+- **Deezer** — Artist & album art
+
+<p align="center">
+  <sub>Made with ❤️ by <a href="https://github.com/Michael-Mathu">Michael Mathu</a> · <a href="https://github.com/Michael-Mathu/athu-music-d/releases">Download Latest</a></sub>
+</p>
